@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDE68A" />
+      <stop offset="40%" stop-color="#D4AF37" />
+      <stop offset="75%" stop-color="#B45309" />
+      <stop offset="100%" stop-color="#78350F" />
+    </linearGradient>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F172A" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+    <filter id="goldGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="128" fill="url(#bgGrad)" />
+  <circle cx="256" cy="256" r="210" stroke="url(#goldGrad)" stroke-width="3" fill="none" opacity="0.4" stroke-dasharray="8 6"/>
+  <!-- Gold Ingot & Vault Key geometric emblem -->
+  <g transform="translate(106, 126)">
+    <!-- Main Diamond/Ingot shape -->
+    <path d="M150 20 L270 110 L270 190 L150 280 L30 190 L30 110 Z" fill="url(#goldGrad)" />
+    <path d="M150 20 L270 110 L150 150 L30 110 Z" fill="#FDE047" opacity="0.6" />
+    <path d="M30 110 L150 150 L150 280 L30 190 Z" fill="#D4AF37" opacity="0.8" />
+    <path d="M270 110 L150 150 L150 280 L270 190 Z" fill="#B45309" opacity="0.9" />
+    <!-- Vault Keyhole / Persian "زر" motif inside -->
+    <circle cx="150" cy="140" r="26" fill="#0B132B" />
+    <path d="M142 152 L158 152 L164 190 L136 190 Z" fill="#0B132B" />
+  </g>
+</svg>

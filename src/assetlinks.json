@@ -1,0 +1,14 @@
+[
+    {
+        "relation": [
+            "delegate_permission/common.handle_all_urls"
+        ],
+        "target": {
+            "namespace": "android_app",
+            "package_name": "gas.gas24",
+            "sha256_cert_fingerprints": [
+                "اینجا_باید_کد_SHA256_اپلیکیشن_خود_را_قرار_دهید"
+            ]
+        }
+    }
+]

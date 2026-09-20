@@ -1,0 +1,62 @@
+[
+        {
+        "name": "اردبیل",
+        "baseUrl": "https://ardabil.gas24.ir"
+    },
+      {
+        "name": "آذربایجان شرقی",
+        "baseUrl": "https://eazar.gas24.ir"
+    },
+    {
+        "name": "فارس",
+        "baseUrl": "https://fars.gas24.ir"
+    },
+     {
+        "name": "همدان",
+        "baseUrl": "https://hamadan.gas24.ir"
+    },
+      {
+        "name": "ایلام",
+        "baseUrl": "https://ilam.gas24.ir"
+    },
+    {
+        "name": "اصفهان",
+        "baseUrl": "https://isfahan.gas24.ir"
+    },
+    {
+        "name": "کرمان",
+        "baseUrl": "https://kerman.gas24.ir"
+    },
+       {
+        "name": "خوزستان",
+        "baseUrl": "https://khuzestan.gas24.ir"
+    },
+    {
+        "name": "خراسان شمالی",
+        "baseUrl": "https://nkhorasan.gas24.ir"
+    },
+    {
+        "name": "قزوین",
+        "baseUrl": "https://qazvin.gas24.ir"
+    },
+    {
+        "name": "قم",
+        "baseUrl": "https://qom.gas24.ir"
+    },
+    {
+        "name": "سیستان و بلوچستان",
+        "baseUrl": "https://sb.gas24.ir"
+    },
+    {
+        "name": "خراسان جنوبی",
+        "baseUrl": "https://skhorasan.gas24.ir"
+    },
+    {
+        "name": "آذربایجان غربی",
+        "baseUrl": "https://wazar.gas24.ir"
+    },
+    {
+        "name": "تست",
+        "baseUrl": "https://testapi.gas24.ir"
+    }
+ ]

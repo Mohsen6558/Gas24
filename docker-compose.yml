@@ -1,0 +1,25 @@
+services:
+  my-app:
+    image: webdevops/php-nginx:8.3
+    container_name: gas24
+    ports:
+      - "8042:80"
+    volumes:
+      - ./src:/app
+      - ./api.conf:/opt/docker/etc/nginx/vhost.common.d/api.conf
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+      - "es.nigc-ar.ir:192.168.4.10"
+      - "es.nigc-kerman.ir:46.249.126.229"
+      - "e.nigc-sbgc.ir:85.185.75.66"
+      - "moshtarak.nigc-eazar.ir:78.38.0.107"
+      - "es.nigc-nkgc.ir:78.38.105.70"
+      - "southkhorasan.artadata.ir:192.168.4.10"
+      - "nigc-hm.artadata.ir:192.168.4.10"
+      - "portal.nigc-khgc.ir:217.219.225.138"
+      - "dpd.farsgas.ir:185.143.233.238"
+      - "ilam.artadata.ir:192.168.4.10"
+    environment:
+      - WEB_DOCUMENT_ROOT=/app
+      - PHP_DATE_TIMEZONE=Asia/Tehran
+      - PHP_MEMORY_LIMIT=256M # برای یک ریدایرکت ساده حتی ۶۴ مگ هم زیاد است
