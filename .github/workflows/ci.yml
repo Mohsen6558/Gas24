@@ -61,7 +61,7 @@ jobs:
           build_tools="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)"
           for apk in app/build/outputs/apk/*/*.apk; do
             echo "== $apk ($(du -h "$apk" | cut -f1))"
-            "$build_tools/aapt2" dump badging "$apk" | grep -E "^(package|sdkVersion|targetSdkVersion|application-label|launchable-activity|uses-permission)"
+            "$build_tools/aapt2" dump badging "$apk" | grep -E "^(package|minSdkVersion|sdkVersion|targetSdkVersion|application-label:|launchable-activity|uses-permission)"
             "$build_tools/apksigner" verify --print-certs "$apk" 2>&1 | grep -E "SHA-256|DOES NOT VERIFY|Missing" || true
           done
 
