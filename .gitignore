@@ -1,0 +1,5 @@
+# Android build output and signing material (see android/.gitignore)
+*.jks
+*.keystore
+keystore.properties
+.DS_Store

@@ -1,10 +1,10 @@
 {
-  "id": "/",
+  "id": "./",
   "name": "زرصال | تسهیلات و خرید قسطی طلا",
   "short_name": "زرصال",
   "description": "پلتفرم نسل جدید فین‌تک طلا؛ وام با وثیقه طلا و خرید قسطی شمش و طلا",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#FFFFFF",
@@ -13,7 +13,7 @@
   "lang": "fa-IR",
   "icons": [
     {
-      "src": "/icon.svg",
+      "src": "./icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
