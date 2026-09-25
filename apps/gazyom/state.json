@@ -1,0 +1,126 @@
+[
+    {
+        "name": "البرز",
+        "baseUrl": "https://alborz.gas24.ir"
+    },
+    {
+        "name": "اردبیل",
+        "baseUrl": "https://ardabil.gas24.ir"
+    },
+    {
+        "name": "بوشهر",
+        "baseUrl": "https://bushehr.gas24.ir"
+    },
+    {
+        "name": "چهارمحال و بختیاری",
+        "baseUrl": "https://chb.gas24.ir"
+    },
+    {
+        "name": "آذربایجان شرقی",
+        "baseUrl": "https://eazar.gas24.ir"
+    },
+    {
+        "name": "فارس",
+        "baseUrl": "https://fars.gas24.ir"
+    },
+    {
+        "name": "گیلان",
+        "baseUrl": "https://gilan.gas24.ir"
+    },
+    {
+        "name": "گلستان",
+        "baseUrl": "https://golestan.gas24.ir"
+    },
+    {
+        "name": "همدان",
+        "baseUrl": "https://hamadan.gas24.ir"
+    },
+    {
+        "name": "هرمزگان",
+        "baseUrl": "https://hormozgan.gas24.ir"
+    },
+    {
+        "name": "ایلام",
+        "baseUrl": "https://ilam.gas24.ir"
+    },
+    {
+        "name": "اصفهان",
+        "baseUrl": "https://isfahan.gas24.ir"
+    },
+    {
+        "name": "کرمان",
+        "baseUrl": "https://kerman.gas24.ir"
+    },
+    {
+        "name": "کرمانشاه",
+        "baseUrl": "https://kermanshah.gas24.ir"
+    },
+    {
+        "name": "خوزستان",
+        "baseUrl": "https://khuzestan.gas24.ir"
+    },
+    {
+        "name": "کهگیلویه و بویراحمد",
+        "baseUrl": "https://kb.gas24.ir"
+    },
+    {
+        "name": "کردستان",
+        "baseUrl": "https://kurdistan.gas24.ir"
+    },
+    {
+        "name": "لرستان",
+        "baseUrl": "https://lorestan.gas24.ir"
+    },
+    {
+        "name": "مرکزی",
+        "baseUrl": "https://markazi.gas24.ir"
+    },
+    {
+        "name": "مازندران",
+        "baseUrl": "https://mazandaran.gas24.ir"
+    },
+    {
+        "name": "خراسان شمالی",
+        "baseUrl": "https://nkhorasan.gas24.ir"
+    },
+    {
+        "name": "قزوین",
+        "baseUrl": "https://qazvin.gas24.ir"
+    },
+    {
+        "name": "قم",
+        "baseUrl": "https://qom.gas24.ir"
+    },
+    {
+        "name": "خراسان رضوی",
+        "baseUrl": "https://razavi.gas24.ir"
+    },
+    {
+        "name": "سمنان",
+        "baseUrl": "https://semnan.gas24.ir"
+    },
+    {
+        "name": "سیستان و بلوچستان",
+        "baseUrl": "https://sb.gas24.ir"
+    },
+    {
+        "name": "خراسان جنوبی",
+        "baseUrl": "https://skhorasan.gas24.ir"
+    },
+    {
+        "name": "تهران",
+        "baseUrl": "https://tehran.gas24.ir"
+    },
+    {
+        "name": "آذربایجان غربی",
+        "baseUrl": "https://wazar.gas24.ir"
+    },
+    {
+        "name": "یزد",
+        "baseUrl": "https://yazd.gas24.ir"
+    },
+    {
+        "name": "زنجان",
+        "baseUrl": "https://zanjan.gas24.ir"
+    }
+]

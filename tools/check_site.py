@@ -34,7 +34,10 @@ def check_ref(owner, ref, base_dir):
     if not ref or ref.startswith(EXTERNAL):
         return
     path = ref.split('#')[0].split('?')[0]
-    target = os.path.join(SRC, path.lstrip('/')) if path.startswith('/') else os.path.join(base_dir, path)
+    # src/my is the document root of my.gas24.ir; everything else is served from src/.
+    my_root = os.path.join(SRC, 'my')
+    root = my_root if os.path.commonpath([owner, my_root]) == my_root else SRC
+    target = os.path.join(root, path.lstrip('/')) if path.startswith('/') else os.path.join(base_dir, path)
     if not os.path.exists(target):
         errors.append(f'broken reference in {os.path.relpath(owner, SRC)}: {ref}')
 
@@ -72,6 +75,13 @@ def main():
             sub = re.sub(r'^https?://', '', item['baseUrl']).split('.')[0]
             if sub not in known:
                 errors.append(f'{rel}: province "{sub}" ({item["name"]}) has no entry in src/api/config.php')
+
+    # A missing precache URL makes the whole service worker install fail.
+    for sw in ('sw.js', 'my/sw.js'):
+        with open(os.path.join(SRC, sw), encoding='utf-8') as f:
+            for url in re.findall(r'\{url:"([^"]+)",revision:', f.read()):
+                if not os.path.exists(os.path.join(SRC, os.path.dirname(sw), url)):
+                    errors.append(f'{sw} precaches missing file {url}')
 
     revisions = subprocess.run([sys.executable, os.path.join(REPO, 'tools', 'update_sw_revisions.py'), '--check'],
                                capture_output=True, text=True)

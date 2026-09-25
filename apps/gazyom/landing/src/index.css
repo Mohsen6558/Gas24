@@ -1,0 +1,68 @@
+@import "tailwindcss";
+@import "@fontsource/vazirmatn/400.css";
+@import "@fontsource/vazirmatn/500.css";
+@import "@fontsource/vazirmatn/700.css";
+@import "@fontsource/vazirmatn/900.css";
+
+@theme {
+  --font-sans: "Vazirmatn", ui-sans-serif, system-ui, sans-serif;
+  --color-brand-primary: #0f172a;
+  --color-brand-accent: #f97316;
+  --color-brand-surface: #f8fafc;
+  --color-brand-border: #e2e8f0;
+  --color-brand-muted: #64748b;
+}
+
+@layer base {
+  body {
+    @apply font-sans bg-brand-surface text-brand-primary antialiased;
+    direction: rtl;
+  }
+}
+
+.glass-card {
+  @apply bg-white/70 backdrop-blur-md border border-brand-border shadow-sm;
+}
+
+.minimal-card {
+  @apply bg-white border border-brand-border rounded-2xl p-6 transition-all duration-300 hover:border-brand-accent/30 hover:shadow-xl hover:shadow-brand-accent/5;
+}
+
+.section-padding {
+  @apply py-24 px-6;
+}
+
+@keyframes scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes scroll-vertical {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-50%); }
+}
+
+.animate-ticker {
+  display: flex;
+  white-space: nowrap;
+  animation: scroll 30s linear infinite;
+}
+
+.animate-ticker-vertical {
+  display: flex;
+  flex-direction: column;
+  animation: scroll-vertical 20s linear infinite;
+}
+
+.animate-ticker-vertical:hover {
+  animation-play-state: paused;
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 20s linear infinite;
+}

@@ -1,0 +1,8 @@
+{
+  "name": "Gas24 -V2",
+  "description": "A gamified gas consumption reduction platform rewarding users with Gazyom points for sustainable energy behavior.",
+  "requestFramePermissions": [
+    "geolocation",
+    "camera"
+  ]
+}

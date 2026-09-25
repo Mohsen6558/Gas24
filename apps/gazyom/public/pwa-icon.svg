@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Gazyom Flame Icon">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f97316" />
+      <stop offset="55%" stop-color="#fb923c" />
+      <stop offset="100%" stop-color="#facc15" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)" />
+  <path
+    d="M257 130c4 26-6 43-18 62-16 24-34 43-34 77 0 36 23 67 55 78 32-11 55-42 55-78 0-44-31-70-51-99-3-4-5-9-7-14z"
+    fill="#fff"
+    fill-opacity="0.2"
+  />
+  <path
+    d="M256 123c6 33-7 54-24 80-15 23-33 47-33 83 0 45 29 82 69 94 40-12 69-49 69-94 0-54-33-84-54-116-8-12-15-25-20-47-4 24-13 38-24 54-17 26-36 50-36 88 0 33 21 61 51 71"
+    fill="none"
+    stroke="#ffffff"
+    stroke-width="26"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>

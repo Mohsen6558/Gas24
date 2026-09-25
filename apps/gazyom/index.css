@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+@import "@fontsource/vazirmatn/400.css";
+@import "@fontsource/vazirmatn/500.css";
+@import "@fontsource/vazirmatn/700.css";
+@import "@fontsource/vazirmatn/900.css";
+
+@layer base {
+  body {
+    font-family: "Vazirmatn", sans-serif;
+    background-color: #fcfcfc;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+@layer utilities {
+  .font-vazir {
+    font-family: "Vazirmatn", sans-serif;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
