@@ -5,6 +5,7 @@
 2. every local src/href in HTML and url() in CSS points at a file that exists
 3. every province listed in a served state.json has an entry in src/api/config.php
 4. service-worker precache revisions match the files (tools/update_sw_revisions.py)
+5. gas24 pages carry the Google Analytics tag; sitemap.xml parses and lists existing pages
 """
 import json
 import os
@@ -16,6 +17,11 @@ REPO = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)),
 SRC = os.path.join(REPO, 'src')
 # Lists the apps actually fetch (state2.json is an unused draft of all provinces).
 SERVED_STATE_FILES = ['state.json', 'app/state.json', 'my/state.json', 'my/app/state.json', 'my/assets/state.json']
+GA_ID = 'G-9L8FG6MYMX'
+PROVINCE_PAGES = ['ardabil', 'eazar', 'fars', 'hamadan', 'ilam', 'isfahan', 'kerman', 'khuzestan',
+                  'nkhorasan', 'qom', 'sb', 'skhorasan', 'wazar']
+GA_PAGES = ['index.html', 'app/index.html', 'my/index.html', 'my/app/index.html', 'test/index.html'] + [
+    f'{p}/index.html' for p in PROVINCE_PAGES]
 HTML_REF = re.compile(r'''(?:src|href)=["']([^"']+)["']''')
 CSS_REF = re.compile(r'''url\(\s*["']?([^"')]+)["']?\s*\)''')
 EXTERNAL = ('http://', 'https://', '//', 'data:', 'mailto:', 'tel:', '#', 'javascript:')
@@ -75,6 +81,26 @@ def main():
             sub = re.sub(r'^https?://', '', item['baseUrl']).split('.')[0]
             if sub not in known:
                 errors.append(f'{rel}: province "{sub}" ({item["name"]}) has no entry in src/api/config.php')
+
+    # Google Analytics must stay on every gas24 page (a fresh province build would drop it).
+    for rel in GA_PAGES:
+        with open(os.path.join(SRC, rel), encoding='utf-8') as f:
+            if GA_ID not in f.read():
+                errors.append(f'{rel}: Google Analytics tag ({GA_ID}) is missing')
+
+    # sitemap.xml must parse and point only at pages that exist.
+    import xml.etree.ElementTree as ET
+    ns = {'s': 'http://www.sitemaps.org/schemas/sitemap/0.9'}
+    try:
+        urls = [u.text for u in ET.parse(os.path.join(SRC, 'sitemap.xml')).findall('s:url/s:loc', ns)]
+    except (ET.ParseError, OSError) as e:
+        errors.append(f'sitemap.xml: {e}')
+        urls = []
+    for url in urls:
+        host = re.sub(r'^https://', '', url).split('/')[0]
+        folder = '' if host == 'gas24.ir' else host.split('.')[0]
+        if not os.path.exists(os.path.join(SRC, folder, 'index.html')):
+            errors.append(f'sitemap.xml lists {url} but src/{folder}/index.html does not exist')
 
     # A missing precache URL makes the whole service worker install fail.
     for sw in ('sw.js', 'my/sw.js'):

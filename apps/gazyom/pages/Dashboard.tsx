@@ -2,7 +2,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { UserLevel, Subscription, type ConsumptionData, type Reward } from '../types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { TrendingDown, ChevronLeft, Zap, CloudSun, Trophy, ChevronDown, Check, Plus, Circle, CheckCircle2, Loader2 } from 'lucide-react';
+import { TrendingDown, ChevronLeft, Zap, CloudSun, Trophy, ChevronDown, Check, Plus, Circle, CheckCircle2, Loader2, ClipboardList } from 'lucide-react';
+import { buildDeclarationFormLink } from '../services/shareLinks';
 import { SectionLoader } from '../components/SectionLoader';
 import { getWeatherAdvice, toPersianDigits } from '../services/geminiService';
 import {
@@ -83,6 +84,8 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [rewardsLoading, setRewardsLoading] = useState(false);
   const [rewardsError, setRewardsError] = useState('');
   const [profileLoading, setProfileLoading] = useState(true);
+  const [profileMobile, setProfileMobile] = useState('');
+  const [profileCity, setProfileCity] = useState('');
 
   useEffect(() => {
     getWeatherAdvice().then(setWeatherData);
@@ -126,8 +129,10 @@ const Dashboard: React.FC<DashboardProps> = ({
     fetchGetProfile(wsBaseUrl, { keyNo: activeSub.number }, { signal: ac.signal })
       .then((res) => {
         if (res.ok === false) return;
+        if (res.mobNo) setProfileMobile(String(res.mobNo));
         const row =
           res.rows.find((r) => String(r.key_no) === String(activeSub.number)) ?? res.rows[0];
+        setProfileCity(row?.city_name?.trim() ?? '');
         if (row != null) {
           const token = typeof row.total_token === 'number' ? row.total_token : 0;
           onTotalTokenFromProfile?.(token);
@@ -288,6 +293,13 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   const completedCount = missions.filter((m) => m.completed).length;
 
+  const declarationFormLink = buildDeclarationFormLink({
+    baseUrl: wsBaseUrl,
+    mobile: profileMobile || (typeof localStorage !== 'undefined' ? localStorage.getItem('gazyom_mobile') ?? '' : ''),
+    keyNo: String(activeSub.number),
+    city: profileCity,
+  });
+
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
       
@@ -351,6 +363,24 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </button>
       </div>
+
+      <a
+        href={declarationFormLink}
+        target="_blank"
+        rel="noopener"
+        className="flex items-center gap-4 rounded-3xl bg-gradient-to-l from-emerald-500 to-teal-600 p-4 md:p-6 text-white shadow-xl shadow-emerald-100 active:scale-[0.99] transition-all"
+      >
+        <div className="w-12 h-12 md:w-14 md:h-14 shrink-0 rounded-2xl bg-white/20 border border-white/30 flex items-center justify-center">
+          <ClipboardList size={24} />
+        </div>
+        <div className="flex-1 min-w-0 space-y-1">
+          <p className="text-sm md:text-lg font-black">مشخصات منزل و مصرف انرژی را ثبت کنید</p>
+          <p className="text-[10px] md:text-xs font-bold opacity-90 leading-relaxed">
+            با تکمیل پرسشنامه، پیشنهادهای دقیق‌تری برای کاهش مصرف اشتراک {toPersianDigits(activeSub.number)} دریافت کنید.
+          </p>
+        </div>
+        <ChevronLeft size={20} className="shrink-0" />
+      </a>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         

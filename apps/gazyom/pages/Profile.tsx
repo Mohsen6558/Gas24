@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { buildInviteLink, copyText } from '../services/shareLinks';
 import { Share2, HelpCircle, LogOut, ChevronLeft, Copy, Check, UserCircle2, Hash, Plus, Trash2, X, Settings, Gift, Coins, Heart, Loader2 } from 'lucide-react';
 import { SectionLoader } from '../components/SectionLoader';
 import { Subscription } from '../types';
@@ -75,10 +76,30 @@ const Profile: React.FC<ProfileProps> = ({
   }, [wsBaseUrl, activeSub?.number, activeSubIndex]);
 
   const handleLogout = () => { localStorage.clear(); window.location.reload(); };
-  const copyToClipboard = (text: string) => { 
-    navigator.clipboard.writeText(text); 
-    setCopied(true); 
-    setTimeout(() => setCopied(false), 2500); 
+  const inviteLink = profileReferCode ? buildInviteLink(wsBaseUrl, profileReferCode) : '';
+  const [copyFailed, setCopyFailed] = useState(false);
+  const canShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
+
+  const copyInviteLink = async () => {
+    if (!inviteLink) return;
+    const ok = await copyText(inviteLink);
+    setCopyFailed(!ok);
+    if (!ok) return;
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  };
+
+  const shareInviteLink = async () => {
+    if (!inviteLink) return;
+    try {
+      await navigator.share({
+        title: 'دعوت به گازیوم',
+        text: 'با این لینک در پویش گرمای پایدار عضو شو و گازیوم هدیه بگیر:',
+        url: inviteLink,
+      });
+    } catch {
+      // closed by the user or not supported
+    }
   };
 
   return (
@@ -203,17 +224,41 @@ const Profile: React.FC<ProfileProps> = ({
                     <span className="text-lg md:text-2xl font-black tracking-widest break-all text-left dir-ltr">
                       {profileReferCode ? toPersianDigits(profileReferCode) : '—'}
                     </span>
-                    <button
-                      type="button"
-                      disabled={!profileReferCode}
-                      onClick={() => profileReferCode && copyToClipboard(profileReferCode)}
-                      className={`shrink-0 p-2 md:p-3 rounded-lg md:rounded-xl transition-all disabled:opacity-40 ${
-                        copied ? 'bg-green-500' : 'bg-white text-indigo-700'
-                      }`}
-                    >
-                      {copied ? <Check size={16} md:size={20} /> : <Copy size={16} md:size={20} />}
-                    </button>
+                    <div className="flex shrink-0 gap-2">
+                      {canShare && (
+                        <button
+                          type="button"
+                          disabled={!inviteLink}
+                          onClick={shareInviteLink}
+                          aria-label="اشتراک‌گذاری لینک دعوت"
+                          className="p-2 md:p-3 rounded-lg md:rounded-xl transition-all disabled:opacity-40 bg-white/20 text-white"
+                        >
+                          <Share2 size={16} md:size={20} />
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        disabled={!inviteLink}
+                        onClick={copyInviteLink}
+                        aria-label="کپی لینک دعوت"
+                        className={`p-2 md:p-3 rounded-lg md:rounded-xl transition-all disabled:opacity-40 ${
+                          copied ? 'bg-green-500' : 'bg-white text-indigo-700'
+                        }`}
+                      >
+                        {copied ? <Check size={16} md:size={20} /> : <Copy size={16} md:size={20} />}
+                      </button>
+                    </div>
                   </div>
+                  <p className="text-[10px] md:text-xs font-bold opacity-80 leading-relaxed">
+                    {copied
+                      ? 'لینک دعوت کپی شد؛ آن را برای دوستانتان بفرستید.'
+                      : 'با دکمهٔ کپی، لینک دعوت شما کپی می‌شود؛ دوستتان با باز کردن آن مستقیم با کد شما عضو می‌شود.'}
+                  </p>
+                  {copyFailed && inviteLink && (
+                    <p className="text-[10px] md:text-xs font-bold bg-white/10 rounded-lg p-2 break-all select-all dir-ltr text-left">
+                      {inviteLink}
+                    </p>
+                  )}
                 </div>
               </div>
             </>

@@ -60,7 +60,7 @@ docker compose up -d
 2. استان را به `state.json` مربوطه (`src/state.json` و `src/my/state.json`) اضافه کنید.
 3. `python3 tools/check_site.py` را اجرا کنید.
 
-استان‌هایی که در لیست اپ هستند ولی `upstream` ندارند (فعلاً **آذربایجان شرقی، قزوین، قم، آذربایجان غربی**) پیام «سامانهٔ استان … هنوز متصل نشده است» می‌گیرند.
+استان‌هایی که در لیست اپ هستند ولی `upstream` ندارند (فعلاً **قزوین، قم، آذربایجان غربی**) پیام «سامانهٔ استان … هنوز متصل نشده است» می‌گیرند.
 
 ## اپ اندروید (`android/`)
 
@@ -94,6 +94,7 @@ docker compose up -d
 | `bash tools/test_gateway.sh` | تست‌های درگاه API با سرور جعلی (بدون نیاز به شبکه) |
 | `python3 tools/update_sw_revisions.py` | بعد از هر ویرایش دستی `index.html`، `app/index.html` یا manifest اجرا شود |
 | `python3 tools/fix_subapp_paths.py` | نسبی کردن مسیرهای یک build جدید استانی |
+| `python3 tools/generate_sitemap.py` | ساخت `sitemap.xml` و `robots.txt` برای gas24.ir و ساب‌دامین‌های استانی (بعد از اضافه کردن استان جدید اجرا شود) |
 | `node tools/render_icons.js` | ساخت آیکون‌های PNG وب و اندروید از `src/pwa-icon.svg` |
 
 همهٔ این بررسی‌ها و ساخت APK در `.github/workflows/ci.yml` روی هر push اجرا می‌شوند.

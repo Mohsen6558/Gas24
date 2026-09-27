@@ -1,0 +1,21 @@
+User-agent: *
+Disallow: /api/
+Disallow: /app/
+Disallow: /my/
+Disallow: /test/
+Disallow: /testapi/
+Disallow: /ardabil/
+Disallow: /eazar/
+Disallow: /fars/
+Disallow: /hamadan/
+Disallow: /ilam/
+Disallow: /isfahan/
+Disallow: /kerman/
+Disallow: /khuzestan/
+Disallow: /nkhorasan/
+Disallow: /qom/
+Disallow: /sb/
+Disallow: /skhorasan/
+Disallow: /wazar/
+
+Sitemap: https://gas24.ir/sitemap.xml
