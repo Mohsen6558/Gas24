@@ -224,7 +224,7 @@ if ($debug) {
 // ۶. ارسال به سرور استان
 // ========================================================================
 $upstreamContentType = '';
-$verifyTls = $province['verify_tls'] ?? true;
+$verifyTls = $province['verify_tls'] ?? $config['verify_tls'] ?? true;
 $ch = curl_init($targetUrl);
 curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true,

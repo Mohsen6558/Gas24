@@ -5,6 +5,7 @@
 //   docker compose exec my-app php /opt/gas24-tools/check-upstreams.php https://moshtarak.nigc-eazar.ir
 // اگر برای استانی «TLS نامعتبر» گزارش شد، یا گواهی آن سرور را درست کنید یا
 // به‌طور موقت 'verify_tls' => false را برای همان استان در config.php بگذارید.
+// (این ابزار همیشه با بررسی گواهی تست می‌کند، حتی اگر verify_tls سراسری خاموش باشد.)
 if (PHP_SAPI !== 'cli') {
     http_response_code(404);
     exit();
