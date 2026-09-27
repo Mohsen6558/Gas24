@@ -1,0 +1,52 @@
+@import "@fontsource/vazirmatn/index.css";
+@import "tailwindcss";
+
+@theme {
+  --color-primary-orange: #ff7a00;
+  --color-primary-light: #fff5eb;
+  --color-bg-gray: #fcfcfc;
+  --color-border-soft: #f0f0f0;
+  --font-sans: "Vazirmatn", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  html, body, #root, * {
+    font-family: var(--font-sans) !important;
+  }
+
+  html {
+    direction: rtl;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  body {
+    background-color: #fafafa;
+    color: #1a1a1a;
+  }
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+@layer components {
+  .minimal-card {
+    background: white;
+    border: 1px solid #f0f0f0;
+    box-shadow: 0 4px 20px -10px rgba(0,0,0,0.03);
+  }
+
+  .input-minimal {
+    @apply w-full p-4 bg-[#fcfcfc] border border-[#eeeeee] rounded-2xl focus:border-primary-orange focus:bg-white outline-none transition-all text-sm font-sans;
+  }
+
+  .input-numeric {
+    @apply w-full p-4 bg-[#fcfcfc] border border-[#eeeeee] rounded-2xl focus:border-primary-orange focus:bg-white outline-none transition-all !text-xl !text-center !font-bold font-sans;
+  }
+
+  .tap-target {
+    @apply active:scale-95 transition-transform;
+  }
+}
