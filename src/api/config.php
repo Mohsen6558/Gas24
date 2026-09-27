@@ -21,8 +21,8 @@ return [
         // شبکه داخلی و بدون TLS. نام es.nigc-ar.ir در docker-compose به 192.168.4.10 پین شده؛
         // اگر آن نسخه HTTPS همین سرویس است، این آدرس را با آن جایگزین کنید.
         'ardabil'    => ['name' => 'اردبیل',            'upstream' => 'http://192.168.4.14:8003'],
-        // کاندید: https://moshtarak.nigc-eazar.ir (در extra_hosts پین شده) — پس از تأیید تنظیم شود.
-        'eazar'      => ['name' => 'آذربایجان شرقی',    'upstream' => null],
+        // در سرور production فعال است؛ با خطی که روی سرور به api/index.php اضافه شده بود تطبیق داده شود.
+        'eazar'      => ['name' => 'آذربایجان شرقی',    'upstream' => 'https://moshtarak.nigc-eazar.ir'],
         'fars'       => ['name' => 'فارس',              'upstream' => 'https://dpd.farsgas.ir'],
         'hamadan'    => ['name' => 'همدان',             'upstream' => 'https://nigc-hm.artadata.ir'],
         'ilam'       => ['name' => 'ایلام',             'upstream' => 'https://ilam.artadata.ir'],
