@@ -18,8 +18,8 @@ SRC = os.path.join(REPO, 'src')
 # Lists the apps actually fetch (state2.json is an unused draft of all provinces).
 SERVED_STATE_FILES = ['state.json', 'app/state.json', 'my/state.json', 'my/app/state.json', 'my/assets/state.json']
 GA_ID = 'G-9L8FG6MYMX'
-PROVINCE_PAGES = ['ardabil', 'eazar', 'fars', 'hamadan', 'ilam', 'isfahan', 'kerman', 'khuzestan',
-                  'nkhorasan', 'qom', 'sb', 'skhorasan', 'wazar']
+with open(os.path.join(REPO, 'apps', 'landing', 'src', 'provinces.json'), encoding='utf-8') as _f:
+    PROVINCE_PAGES = [p['key'] for p in json.load(_f)]
 GA_PAGES = ['index.html', 'app/index.html', 'my/index.html', 'my/app/index.html', 'test/index.html'] + [
     f'{p}/index.html' for p in PROVINCE_PAGES]
 HTML_REF = re.compile(r'''(?:src|href)=["']([^"']+)["']''')

@@ -7,6 +7,7 @@ Disallow: /testapi/
 Disallow: /ardabil/
 Disallow: /eazar/
 Disallow: /fars/
+Disallow: /gilan/
 Disallow: /hamadan/
 Disallow: /ilam/
 Disallow: /isfahan/
@@ -17,5 +18,6 @@ Disallow: /qom/
 Disallow: /sb/
 Disallow: /skhorasan/
 Disallow: /wazar/
+Disallow: /yazd/
 
 Sitemap: https://gas24.ir/sitemap.xml

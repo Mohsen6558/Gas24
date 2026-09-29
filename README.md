@@ -11,7 +11,8 @@
 | `src/app/` | اپ گازیوم (PWA) — `sw.js` در ریشه آن را کش می‌کند |
 | `apps/gazyom/` | **سورس اپ گازیوم** (React + Vite) — خروجی آن در `src/my` منتشر می‌شود |
 | `src/my/` | خروجی build اپ برای دامنهٔ `my.gas24.ir` (دستی ویرایش نکنید؛ پایین را ببینید) |
-| `src/<استان>/` | صفحهٔ معرفی هر استان (مسیرها نسبی‌اند؛ هم در `gas24.ir/ardabil/` و هم به‌عنوان ریشهٔ ساب‌دامین کار می‌کنند) |
+| `apps/landing/` | **سورس لندینگ استان‌ها** (یک سورس برای همه؛ متن، شهرها، آمار و عکس هر استان در `src/provinces.json`) |
+| `src/<استان>/` | خروجی لندینگ هر استان (مسیرها نسبی‌اند؛ هم در `gas24.ir/ardabil/` و هم به‌عنوان ریشهٔ ساب‌دامین کار می‌کنند) |
 | `src/api/` | درگاه API: `index.php` و پیکربندی `config.php` |
 | `android/` | اپ اندروید (Kotlin + WebView) |
 | `nginx/00-security.conf` | هدرهای امنیتی و مسدودسازی فایل‌های حساس |
@@ -19,7 +20,13 @@
 | `tools/` | ابزارهای بررسی و نگهداری (پایین‌تر) |
 | `sources/arta/` | سورس سایت آرتا (بیرون از ریشهٔ وب‌سرور) |
 
-> سورس صفحات استانی در این مخزن نیست؛ فقط خروجی build آن‌ها هست.
+## لندینگ استان‌ها
+
+همهٔ صفحه‌های `<استان>.gas24.ir` از یک سورس (`apps/landing`) ساخته می‌شوند. هر استان فقط یک بلوک در `apps/landing/src/provinces.json` دارد: نام، شعار، شهرها، آمار (اختیاری) و عکس بالای صفحه (اختیاری؛ از `https://gas24.ir/media/content/`).
+
+- تغییر ظاهر یا متن مشترک: `apps/landing/src/App.tsx`
+- انتشار: `bash tools/deploy_landings.sh` — یک بار build می‌گیرد، در `src/<استان>/` می‌گذارد، sitemap و robots را به‌روز و سایت را بررسی می‌کند. بعد commit و push کنید.
+- استان تازه: یک بلوک به `provinces.json` اضافه کنید و همان اسکریپت را اجرا کنید. پراکسی اصلی ساب‌دامین را خودش به پوشه می‌برد؛ فقط DNS و گواهی باید ساب‌دامین را پوشش دهند.
 
 ## ویرایش اپ گازیوم و انتشار روی my
 
@@ -100,8 +107,9 @@ docker compose up -d
 | `python3 tools/check_site.py` | JSONها، لینک‌های شکسته، هم‌خوانی استان‌ها با درگاه، به‌روز بودن Service Worker |
 | `bash tools/test_gateway.sh` | تست‌های درگاه API با سرور جعلی (بدون نیاز به شبکه) |
 | `python3 tools/update_sw_revisions.py` | بعد از هر ویرایش دستی `index.html`، `app/index.html` یا manifest اجرا شود |
-| `python3 tools/fix_subapp_paths.py` | نسبی کردن مسیرهای یک build جدید استانی |
-| `python3 tools/generate_sitemap.py` | ساخت `sitemap.xml` و `robots.txt` برای gas24.ir و ساب‌دامین‌های استانی (بعد از اضافه کردن استان جدید اجرا شود) |
+| `bash tools/deploy_landings.sh` | ساخت لندینگ از `apps/landing` و انتشار در پوشهٔ همهٔ استان‌ها |
+| `python3 tools/fix_subapp_paths.py` | نسبی کردن مسیرهای یک build جدید (برای صفحه‌هایی که سورسشان این‌جا نیست) |
+| `python3 tools/generate_sitemap.py` | ساخت `sitemap.xml` و `robots.txt` برای gas24.ir و ساب‌دامین‌های استانی (فهرست استان‌ها از `apps/landing/src/provinces.json`؛ `deploy_landings.sh` خودش اجرایش می‌کند) |
 | `node tools/render_icons.js` | ساخت آیکون‌های PNG وب و اندروید از `src/pwa-icon.svg` |
 
 همهٔ این بررسی‌ها و ساخت APK در `.github/workflows/ci.yml` روی هر push اجرا می‌شوند.

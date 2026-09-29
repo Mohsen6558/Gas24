@@ -5,17 +5,19 @@ The outer proxy serves <province>.gas24.ir from src/<province>/, so each subdoma
 robots.txt (src/<province>/robots.txt). Every robots.txt points at https://gas24.ir/sitemap.xml;
 that cross-reference is what lets one sitemap on gas24.ir list pages on the subdomains.
 lastmod is the date of the last commit that touched the page's folder.
-Run after adding a province page: python3 tools/generate_sitemap.py
+Runs as part of tools/deploy_landings.sh; by hand: python3 tools/generate_sitemap.py
 """
 import datetime
+import json
 import os
 import subprocess
 
 REPO = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 SRC = os.path.join(REPO, 'src')
 SITEMAP_URL = 'https://gas24.ir/sitemap.xml'
-PROVINCES = ['ardabil', 'eazar', 'fars', 'hamadan', 'ilam', 'isfahan', 'kerman', 'khuzestan',
-             'nkhorasan', 'qom', 'sb', 'skhorasan', 'wazar']
+# Every province with a landing page (apps/landing/src/provinces.json).
+with open(os.path.join(REPO, 'apps', 'landing', 'src', 'provinces.json'), encoding='utf-8') as _f:
+    PROVINCES = [p['key'] for p in json.load(_f)]
 # On gas24.ir itself these paths are the API, the app, or copies of the subdomain pages.
 MAIN_DISALLOW = ['/api/', '/app/', '/my/', '/test/', '/testapi/'] + [f'/{p}/' for p in PROVINCES]
 
