@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { MapPinned, ShieldCheck, RefreshCw, ChevronRight } from 'lucide-react';
 import { toPersianDigits } from '../services/geminiService';
+import { saveGazyomAuthToken } from '../services/wsOptimizeApi';
 
 interface ProvinceItem {
   name: string;
@@ -319,7 +320,7 @@ const ProvinceEntry: React.FC<ProvinceEntryProps> = ({
         return;
       }
 
-      document.cookie = `gazyom_token=${encodeURIComponent(data.token)}; path=/; max-age=2592000; SameSite=Lax`;
+      saveGazyomAuthToken(data.token);
       onSuccess(normalizeBaseUrl(selectedBaseUrl), mobile);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'خطا در ارتباط با سرور');

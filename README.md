@@ -38,6 +38,12 @@ docker compose up -d
 
 سایت روی پورت `8042` بالا می‌آید و پشت پراکسی اصلی (TLS) قرار می‌گیرد. کانتینر `healthcheck` و `restart: unless-stopped` دارد.
 
+### نمایش داخل وب ایتا (iframe)
+
+برنامک ایتا، `my.gas24.ir` را در iframe باز می‌کند. برای همین:
+- پراکسی اصلی نباید برای `my.gas24.ir` هدر `X-Frame-Options` یا `Content-Security-Policy: frame-ancestors 'self'` بفرستد. این کار با یک `map` روی `$host` در کانفیگ پراکسی انجام شده؛ بقیهٔ دامنه‌ها همچنان `SAMEORIGIN` می‌گیرند. کانتینر خودش این هدرها را نمی‌فرستد.
+- اپ توکن ورود را علاوه بر کوکی در `localStorage` هم نگه می‌دارد، چون مرورگر داخل iframe بین‌سایتی کوکی `SameSite=Lax` را دور می‌ریزد.
+
 ## درگاه API (`src/api`)
 
 اپ درخواست‌ها را به `https://<استان>.gas24.ir/api/index.php/ws-optimize/<اکشن>` می‌فرستد و درگاه آن را به سرور همان استان می‌رساند.

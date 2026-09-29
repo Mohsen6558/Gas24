@@ -11,17 +11,48 @@ import type {
 } from '../types';
 
 const TOKEN_COOKIE = 'gazyom_token';
+const TOKEN_MAX_AGE = 2592000;
 
 export const normalizeWsBaseUrl = (baseUrl: string) => baseUrl.replace(/\/+$/, '');
 
-
-export function readGazyomAuthToken(): string | null {
+// The token is also kept in localStorage: inside a cross-site iframe (the Eitaa web
+// client embeds the app) browsers silently drop SameSite=Lax cookies, so a cookie-only
+// token was lost right after login and every request went out unauthenticated.
+function readTokenCookie(): string | null {
   const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${TOKEN_COOKIE}=([^;]*)`));
   if (!match?.[1]) return null;
   try {
     return decodeURIComponent(match[1]);
   } catch {
     return match[1];
+  }
+}
+
+export function readGazyomAuthToken(): string | null {
+  const fromCookie = readTokenCookie();
+  if (fromCookie) return fromCookie;
+  try {
+    return localStorage.getItem(TOKEN_COOKIE);
+  } catch {
+    return null;
+  }
+}
+
+export function saveGazyomAuthToken(token: string) {
+  document.cookie = `${TOKEN_COOKIE}=${encodeURIComponent(token)}; path=/; max-age=${TOKEN_MAX_AGE}; SameSite=Lax`;
+  try {
+    localStorage.setItem(TOKEN_COOKIE, token);
+  } catch {
+    // storage disabled; the cookie is all we have
+  }
+}
+
+export function clearGazyomAuthToken() {
+  document.cookie = `${TOKEN_COOKIE}=; path=/; max-age=0; SameSite=Lax`;
+  try {
+    localStorage.removeItem(TOKEN_COOKIE);
+  } catch {
+    // storage disabled
   }
 }
 

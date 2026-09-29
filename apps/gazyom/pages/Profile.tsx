@@ -5,7 +5,7 @@ import { Share2, HelpCircle, LogOut, ChevronLeft, Copy, Check, UserCircle2, Hash
 import { SectionLoader } from '../components/SectionLoader';
 import { Subscription } from '../types';
 import { toPersianDigits } from '../services/geminiService';
-import { fetchGetProfile } from '../services/wsOptimizeApi';
+import { clearGazyomAuthToken, fetchGetProfile } from '../services/wsOptimizeApi';
 import AddSubscriptionFlow from '../components/AddSubscriptionFlow';
 
 interface ProfileProps {
@@ -75,7 +75,7 @@ const Profile: React.FC<ProfileProps> = ({
     return () => ac.abort();
   }, [wsBaseUrl, activeSub?.number, activeSubIndex]);
 
-  const handleLogout = () => { localStorage.clear(); window.location.reload(); };
+  const handleLogout = () => { clearGazyomAuthToken(); localStorage.clear(); window.location.reload(); };
   const inviteLink = profileReferCode ? buildInviteLink(wsBaseUrl, profileReferCode) : '';
   const [copyFailed, setCopyFailed] = useState(false);
   const canShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function';

@@ -33,7 +33,7 @@ const Splash: React.FC<SplashProps> = ({ onFinish }) => {
           ورود به پویش
         </button>
 
-        <p className="mt-10 text-xs opacity-70 sm:mt-12">شرکت ملی گاز ایران - کمپین زمستانه</p>
+        <p className="mt-10 text-xs opacity-70 sm:mt-12">شرکت فناوران پیشرو - کمپین زمستانه</p>
       </div>
     </div>
   );

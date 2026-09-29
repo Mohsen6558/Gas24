@@ -41,7 +41,7 @@ const SubscriptionEntry: React.FC<SubscriptionEntryProps> = ({ baseUrl, onSucces
       </div>
 
       <div className="shrink-0 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] text-center sm:px-8">
-        <span className="text-[10px] text-slate-300 font-bold">شرکت ملی گاز ایران - پویش سراسری گازیوم</span>
+        <span className="text-[10px] text-slate-300 font-bold">شرکت فناوران پیشرو - پویش سراسری گازیوم</span>
       </div>
     </div>
   );
