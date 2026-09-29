@@ -22,9 +22,10 @@ if [[ "${1:-}" == "--prune" ]]; then
 fi
 
 # src/my keeps its own state.json, app/state.json and .well-known/ (not part of the build).
-mkdir -p "$OUT/assets" "$OUT/app" "$OUT/icons"
+mkdir -p "$OUT/assets" "$OUT/app" "$OUT/icons" "$OUT/placeholders"
 cp -r dist/assets/. "$OUT/assets/"
 cp -r dist/icons/. "$OUT/icons/"
+cp -r dist/placeholders/. "$OUT/placeholders/"
 cp dist/sw.js dist/workbox-*.js dist/manifest.webmanifest dist/pwa-icon.svg "$OUT/"
 cp dist/app/index.html "$OUT/app/index.html"
 cp dist/app/index.html "$OUT/index.html" # my.gas24.ir/ opens the app directly

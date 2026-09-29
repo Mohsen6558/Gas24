@@ -115,13 +115,24 @@ const ProvinceEntry: React.FC<ProvinceEntryProps> = ({
     try {
       const url = `${normalizeBaseUrl(baseUrl)}/api/index.php/ws-optimize/generate-captcha`;
       const response = await fetch(url);
-      if (!response.ok) throw new Error('دریافت کپچا ناموفق بود');
-      const data = await response.json();
+      const data = await response.json().catch(() => null);
+      if (!response.ok) {
+        // the gateway explains 429/503 in Persian; otherwise the status code helps support
+        throw new Error(
+          data?.message || `دریافت کپچا ناموفق بود (کد ${toPersianDigits(String(response.status))})`
+        );
+      }
       if (!data?.image) throw new Error('تصویر کپچا دریافت نشد');
       setCaptchaImage(toCaptchaSrc(data.image));
     } catch (err) {
       setCaptchaImage('');
-      setError(err instanceof Error ? err.message : 'خطا در دریافت کپچا');
+      setError(
+        err instanceof TypeError
+          ? 'اتصال به سرور استان برقرار نشد. اینترنت را بررسی کنید و دوباره تلاش کنید.'
+          : err instanceof Error
+            ? err.message
+            : 'خطا در دریافت کپچا'
+      );
     } finally {
       setLoadingCaptcha(false);
     }

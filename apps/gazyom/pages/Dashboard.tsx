@@ -29,6 +29,7 @@ import {
   rewardsListHourWrite,
 } from '../services/dataRefreshCache';
 import { orderChartRowsByJalali } from '../services/chartConsumptionSeasons';
+import { REWARD_PLACEHOLDER, fallbackTo } from '../services/media';
 
 interface Mission {
   id: number;
@@ -584,6 +585,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                     <img
                       src={reward.image}
                       alt=""
+                      onError={fallbackTo(REWARD_PLACEHOLDER)}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>

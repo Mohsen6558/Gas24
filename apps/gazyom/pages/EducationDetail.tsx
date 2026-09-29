@@ -6,14 +6,14 @@ import type { EducationMessage } from '../types';
 import { fetchGetMessages, claimMessageToken, sortEducationMessagesVideoFirst } from '../services/wsOptimizeApi';
 import { educationMessagesHourRead, educationMessagesHourWrite } from '../services/dataRefreshCache';
 import { SectionLoader } from '../components/SectionLoader';
+import { EDUCATION_PLACEHOLDER, fallbackTo } from '../services/media';
 import {
   isEducationBookmarked,
   subscribeEducationBookmarks,
   toggleEducationBookmark,
 } from '../services/educationBookmarks';
 
-const PLACEHOLDER =
-  'https://images.unsplash.com/photo-1473186578172-c141e6798ee4?auto=format&fit=crop&q=80&w=1200';
+const PLACEHOLDER = EDUCATION_PLACEHOLDER;
 
 function claimStorageKey(keyNo: string | number, messageId: number) {
   return `gazyom_msg_claimed_${String(keyNo)}_${messageId}`;
@@ -236,7 +236,7 @@ const EducationDetail: React.FC<EducationDetailProps> = ({
 
             {!isVideo ? (
               <div className="rounded-[28px] md:rounded-[40px] overflow-hidden aspect-video md:h-[500px] shadow-2xl border border-slate-100 group relative">
-                <img src={thumb} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" alt={item.title} />
+                <img src={thumb} onError={fallbackTo(PLACEHOLDER)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" alt={item.title} />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
               </div>
             ) : null}
@@ -339,7 +339,7 @@ const EducationDetail: React.FC<EducationDetailProps> = ({
                         className="flex gap-4 p-3 md:p-4 bg-white rounded-2xl md:rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl transition-all cursor-pointer group"
                       >
                         <div className="w-16 h-16 md:w-24 md:h-24 rounded-xl md:rounded-2xl overflow-hidden shrink-0">
-                          <img src={relThumb} className="w-full h-full object-cover group-hover:scale-110 transition-transform" alt={rel.title} />
+                          <img src={relThumb} onError={fallbackTo(PLACEHOLDER)} className="w-full h-full object-cover group-hover:scale-110 transition-transform" alt={rel.title} />
                         </div>
                         <div className="flex flex-col justify-center gap-1 md:gap-2 min-w-0">
                           <span className="text-[8px] md:text-[10px] font-black text-orange-500 uppercase truncate">

@@ -9,6 +9,7 @@ import type {
   Reward,
   Transaction,
 } from '../types';
+import { REWARD_PLACEHOLDER, normalizeImageUrl } from './media';
 
 const TOKEN_COOKIE = 'gazyom_token';
 const TOKEN_MAX_AGE = 2592000;
@@ -904,8 +905,7 @@ export async function fetchConsumptionChart(
   return { ok: true, items, count };
 }
 
-const PLACEHOLDER_REWARD_IMAGE =
-  'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=400';
+const PLACEHOLDER_REWARD_IMAGE = REWARD_PLACEHOLDER;
 
 function mapRewardCategory(raw: string): Reward['category'] {
   const s = raw.toLowerCase();
@@ -929,7 +929,7 @@ export function normalizeRewardRow(item: unknown): Reward | null {
   const effectiveRewardId = numId > 0 ? Math.trunc(numId) : parsedId > 0 ? parsedId : 0;
   const title = pickStrRow(r, ['Title', 'title', 'Name', 'name', 'RewardTitle']);
   const image =
-    pickStrRow(r, ['Image', 'image', 'Pic', 'pic', 'ImageUrl', 'imageUrl', 'Thumb', 'thumb']) ||
+    normalizeImageUrl(pickStrRow(r, ['Image', 'image', 'Pic', 'pic', 'ImageUrl', 'imageUrl', 'Thumb', 'thumb'])) ||
     PLACEHOLDER_REWARD_IMAGE;
   const requiredGazyom = pickNumRow(r, [
     'token_required',
@@ -1325,7 +1325,7 @@ export function normalizeMyRewardUsedRow(item: unknown): MyRewardClaimedItem | n
 
   const title = pickStrRow(r, ['title', 'Title', 'name', 'Name']) || 'جایزه';
   const image =
-    pickStrRow(r, ['image', 'Image', 'pic', 'Pic']) || PLACEHOLDER_REWARD_IMAGE;
+    normalizeImageUrl(pickStrRow(r, ['image', 'Image', 'pic', 'Pic'])) || PLACEHOLDER_REWARD_IMAGE;
   const date =
     pickStrRow(r, ['assignee_date', 'AssigneeDate', 'assigneeDate', 'date', 'Date']) || '—';
   const { copy, label } = normalizeMyRewardCodeField(r.code);
@@ -1440,7 +1440,7 @@ export function normalizeEducationMessage(item: unknown): EducationMessage | nul
   const text = pickStrRow(r, ['text', 'Text', 'body', 'Body']);
   const category = pickStrRow(r, ['category', 'Category']);
   const icon = pickStrRow(r, ['icon', 'Icon']);
-  const imageUrl = pickStrRow(r, ['image_url', 'ImageURL', 'imageUrl', 'image', 'Image']);
+  const imageUrl = normalizeImageUrl(pickStrRow(r, ['image_url', 'ImageURL', 'imageUrl', 'image', 'Image']));
   const videoUrl = pickStrRow(r, ['video_url', 'VideoURL', 'videoUrl', 'video', 'Video']);
   const typ = Math.trunc(pickNumRow(r, ['type', 'Type']));
   const type: 0 | 1 = typ === 1 ? 1 : 0;

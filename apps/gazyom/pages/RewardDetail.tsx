@@ -4,6 +4,7 @@ import { Reward } from '../types';
 import { ArrowRight, CheckCircle2, X, Info, Gift, Copy } from 'lucide-react';
 import { toPersianDigits } from '../services/geminiService';
 import { redeemReward } from '../services/wsOptimizeApi';
+import { REWARD_PLACEHOLDER, fallbackTo } from '../services/media';
 
 function resolveRewardIdForRedeem(reward: Reward): number | null {
   if (reward.rewardId != null && reward.rewardId > 0) return Math.trunc(reward.rewardId);
@@ -85,6 +86,7 @@ const RewardDetail: React.FC<RewardDetailProps> = ({
             <img 
               src={reward.image} 
               alt={reward.title} 
+              onError={fallbackTo(REWARD_PLACEHOLDER)}
               className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-1000" 
             />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent md:bg-gradient-to-l"></div>

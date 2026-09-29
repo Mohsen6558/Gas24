@@ -6,6 +6,7 @@ import { Reward } from '../types';
 import { toPersianDigits } from '../services/geminiService';
 import { fetchRewardList } from '../services/wsOptimizeApi';
 import { rewardsListHourRead, rewardsListHourWrite } from '../services/dataRefreshCache';
+import { REWARD_PLACEHOLDER, fallbackTo } from '../services/media';
 
 function rewardFilterKey(r: Reward): string {
   const raw = r.categoryLabel?.trim();
@@ -172,7 +173,7 @@ const Rewards: React.FC<RewardsProps> = ({
           filteredRewards.map((reward) => (
           <div key={reward.id} onClick={() => onRewardClick(reward)} className="group bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-50 hover:shadow-2xl transition-all cursor-pointer flex flex-col">
             <div className="relative h-48 md:h-60 overflow-hidden">
-              <img src={reward.image} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+              <img src={reward.image} alt="" onError={fallbackTo(REWARD_PLACEHOLDER)} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
               <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-3 md:px-4 py-1.5 md:py-2 rounded-xl shadow-lg border border-white/50 flex flex-col items-center">
                 <span className="text-xs md:text-sm font-black text-orange-600">{toPersianDigits(reward.requiredGazyom.toLocaleString())}</span>
                 <span className="text-[8px] md:text-[10px] font-bold text-slate-400 text-center leading-tight">امتیاز مورد نیاز</span>

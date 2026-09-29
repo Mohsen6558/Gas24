@@ -11,9 +11,9 @@ import {
 } from '../services/educationBookmarks';
 import { toPersianDigits } from '../services/geminiService';
 import { SectionLoader } from '../components/SectionLoader';
+import { EDUCATION_PLACEHOLDER, fallbackTo } from '../services/media';
 
-const PLACEHOLDER =
-  'https://images.unsplash.com/photo-1473186578172-c141e6798ee4?auto=format&fit=crop&q=80&w=800';
+const PLACEHOLDER = EDUCATION_PLACEHOLDER;
 
 function iconForMessage(iconRaw: string, category: string) {
   const s = `${iconRaw} ${category}`.toLowerCase();
@@ -123,7 +123,7 @@ const Education: React.FC<EducationProps> = ({ wsBaseUrl, onItemClick }) => {
                 className="group bg-white rounded-[7px] shadow-[0_4px_25px_rgb(0,0,0,0.03)] border border-slate-50 overflow-hidden active:scale-[0.98] transition-all cursor-pointer"
               >
                 <div className="relative h-44 w-full shrink-0 bg-slate-100 md:h-48">
-                  <img src={thumb} alt={item.title} className="h-full w-full object-cover" />
+                  <img src={thumb} alt={item.title} onError={fallbackTo(PLACEHOLDER)} className="h-full w-full object-cover" />
                   {isVideo ? (
                     <>
                       <div className="absolute inset-0 flex items-center justify-center bg-black/20">

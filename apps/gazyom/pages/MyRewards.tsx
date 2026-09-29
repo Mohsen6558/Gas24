@@ -6,6 +6,7 @@ import { toPersianDigits } from '../services/geminiService';
 import { fetchMyRewards } from '../services/wsOptimizeApi';
 import { myRewardsHourRead, myRewardsHourWrite } from '../services/dataRefreshCache';
 import { SectionLoader } from '../components/SectionLoader';
+import { REWARD_PLACEHOLDER, fallbackTo } from '../services/media';
 
 const MyRewards: React.FC<{
   onBack: () => void;
@@ -75,7 +76,7 @@ const MyRewards: React.FC<{
           items.map((item) => (
             <div key={item.id} className="bg-white rounded-[7px] overflow-hidden shadow-sm border border-slate-100 flex flex-col">
               <div className="flex p-4 gap-4">
-                <img src={item.image} alt="" className="w-20 h-20 rounded-[7px] object-cover shrink-0" />
+                <img src={item.image} alt="" onError={fallbackTo(REWARD_PLACEHOLDER)} className="w-20 h-20 rounded-[7px] object-cover shrink-0" />
                 <div className="flex flex-col justify-center gap-1 min-w-0">
                   <h3 className="text-xs font-black text-slate-800 leading-tight">{item.title}</h3>
                   <div className="flex items-center gap-2 text-[9px] font-bold text-slate-400">
