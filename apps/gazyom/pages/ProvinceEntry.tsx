@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { MapPinned, ShieldCheck, RefreshCw, ChevronRight } from 'lucide-react';
 import { toPersianDigits } from '../services/geminiService';
-import { saveGazyomAuthToken } from '../services/wsOptimizeApi';
+import { saveGazyomAuthToken, toEnglishDigitsOnly } from '../services/wsOptimizeApi';
 
 interface ProvinceItem {
   name: string;
@@ -429,9 +429,12 @@ const ProvinceEntry: React.FC<ProvinceEntryProps> = ({
                 <label className="text-[11px] font-black text-slate-400 mr-2">کد کپچا</label>
                 <input
                   type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   value={captchaCode}
                   onChange={(e) => {
-                    setCaptchaCode(e.target.value);
+                    // the captcha is digits only; a Persian keyboard types ۰-۹, the server expects 0-9
+                    setCaptchaCode(toEnglishDigitsOnly(e.target.value));
                     setError('');
                   }}
                   placeholder="کد داخل تصویر"
@@ -447,7 +450,7 @@ const ProvinceEntry: React.FC<ProvinceEntryProps> = ({
                 type="tel"
                 value={mobile}
                 onChange={(e) => {
-                  setMobile(e.target.value.replace(/\D/g, '').slice(0, 11));
+                  setMobile(toEnglishDigitsOnly(e.target.value).slice(0, 11));
                   setError('');
                 }}
                 placeholder={toPersianDigits('09123456789')}
@@ -515,7 +518,7 @@ const ProvinceEntry: React.FC<ProvinceEntryProps> = ({
                 type="tel"
                 value={otp}
                 onChange={(e) => {
-                  setOtp(e.target.value.replace(/\D/g, '').slice(0, 5));
+                  setOtp(toEnglishDigitsOnly(e.target.value).slice(0, 5));
                   setError('');
                 }}
                 placeholder={toPersianDigits('12345')}

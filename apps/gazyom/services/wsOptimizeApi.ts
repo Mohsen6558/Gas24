@@ -288,12 +288,13 @@ export async function fetchKeynoList(
 type JsonInit = Omit<RequestInit, 'body'> & { body?: unknown };
 
 const FA_DIGITS = '۰۱۲۳۴۵۶۷۸۹';
+const AR_DIGITS = '٠١٢٣٤٥٦٧٨٩';
 
 
 export function toEnglishDigitsOnly(raw: string): string {
   let out = '';
   for (const ch of raw) {
-    const i = FA_DIGITS.indexOf(ch);
+    const i = Math.max(FA_DIGITS.indexOf(ch), AR_DIGITS.indexOf(ch));
     if (i >= 0) {
       out += String(i);
       continue;
