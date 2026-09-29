@@ -48,9 +48,10 @@ docker compose up -d
 ### نمایش داخل وب ایتا (iframe)
 
 برنامک ایتا، `my.gas24.ir` را در iframe باز می‌کند. برای همین:
-- پراکسی اصلی برای `my.gas24.ir` به‌جای `X-Frame-Options` هدر `Content-Security-Policy: frame-ancestors 'self' https://eitaa.com https://*.eitaa.com https://eitaa.ir https://*.eitaa.ir` می‌فرستد (با `map` روی `$host`)، پس فقط خود سایت و ایتا می‌توانند آن را در iframe باز کنند؛ بقیهٔ دامنه‌ها همچنان `X-Frame-Options: SAMEORIGIN` می‌گیرند. کانتینر خودش هیچ‌کدام از این دو هدر را نمی‌فرستد.
+- پراکسی اصلی برای `my.gas24.ir` به‌جای `X-Frame-Options` هدر `Content-Security-Policy: frame-ancestors 'self' https://eitaa.com https://*.eitaa.com https://eitaa.ir https://*.eitaa.ir https://bale.ai https://*.bale.ai https://ble.ir https://*.ble.ir` می‌فرستد (با `map` روی `$host`)، پس فقط خود سایت، ایتا و بله می‌توانند آن را در iframe باز کنند (پیام‌رسان تازه = دامنه‌اش به همین فهرست)؛ بقیهٔ دامنه‌ها همچنان `X-Frame-Options: SAMEORIGIN` می‌گیرند. کانتینر خودش هیچ‌کدام از این دو هدر را نمی‌فرستد.
 - Service Worker صفحهٔ اپ را با همان هدرهای لحظهٔ ذخیره نگه می‌دارد؛ بعد از عوض کردن هدرها، برای دیدن هدر تازه در مرورگر خودتان «Clear site data» بزنید.
 - اپ توکن ورود را علاوه بر کوکی در `localStorage` هم نگه می‌دارد، چون مرورگر داخل iframe بین‌سایتی کوکی `SameSite=Lax` را دور می‌ریزد.
+- نسخهٔ وب ایتا و بله مثل تلگرام منتظر پیام `web_app_ready` از برنامک می‌مانند و بدون آن بعد از چند ثانیه «Open in new tab» نشان می‌دهند؛ `apps/gazyom/app/index.html` این پیام را اول صفحه (قبل از بارگذاری اپ) می‌فرستد.
 
 ## درگاه API (`src/api`)
 

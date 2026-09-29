@@ -1,6 +1,22 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
   <head>
+    <script>
+      // Messenger web clients (Eitaa, Bale) open the app in an iframe and follow Telegram's
+      // mini-app protocol: they wait for these messages and, without them, replace the frame
+      // with "Open in new tab" after a couple of seconds. Sent first thing, before the bundle loads.
+      (function () {
+        if (window.parent === window) return;
+        function post(eventType) {
+          try {
+            window.parent.postMessage(JSON.stringify({ eventType: eventType, eventData: {} }), '*');
+          } catch (e) {}
+        }
+        post('iframe_ready');
+        post('web_app_ready');
+        post('web_app_expand');
+      })();
+    </script>
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-9L8FG6MYMX"></script>
     <script>
