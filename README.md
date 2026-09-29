@@ -41,7 +41,8 @@ docker compose up -d
 ### نمایش داخل وب ایتا (iframe)
 
 برنامک ایتا، `my.gas24.ir` را در iframe باز می‌کند. برای همین:
-- پراکسی اصلی نباید برای `my.gas24.ir` هدر `X-Frame-Options` یا `Content-Security-Policy: frame-ancestors 'self'` بفرستد. این کار با یک `map` روی `$host` در کانفیگ پراکسی انجام شده؛ بقیهٔ دامنه‌ها همچنان `SAMEORIGIN` می‌گیرند. کانتینر خودش این هدرها را نمی‌فرستد.
+- پراکسی اصلی برای `my.gas24.ir` به‌جای `X-Frame-Options` هدر `Content-Security-Policy: frame-ancestors 'self' https://eitaa.com https://*.eitaa.com https://eitaa.ir https://*.eitaa.ir` می‌فرستد (با `map` روی `$host`)، پس فقط خود سایت و ایتا می‌توانند آن را در iframe باز کنند؛ بقیهٔ دامنه‌ها همچنان `X-Frame-Options: SAMEORIGIN` می‌گیرند. کانتینر خودش هیچ‌کدام از این دو هدر را نمی‌فرستد.
+- Service Worker صفحهٔ اپ را با همان هدرهای لحظهٔ ذخیره نگه می‌دارد؛ بعد از عوض کردن هدرها، برای دیدن هدر تازه در مرورگر خودتان «Clear site data» بزنید.
 - اپ توکن ورود را علاوه بر کوکی در `localStorage` هم نگه می‌دارد، چون مرورگر داخل iframe بین‌سایتی کوکی `SameSite=Lax` را دور می‌ریزد.
 
 ## درگاه API (`src/api`)
