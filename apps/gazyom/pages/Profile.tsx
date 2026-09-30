@@ -6,6 +6,7 @@ import { SectionLoader } from '../components/SectionLoader';
 import { Subscription } from '../types';
 import { toPersianDigits } from '../services/geminiService';
 import { clearGazyomAuthToken, fetchGetProfile } from '../services/wsOptimizeApi';
+import { keepBannerViewsAcross } from '../services/promoBanner';
 import AddSubscriptionFlow from '../components/AddSubscriptionFlow';
 
 interface ProfileProps {
@@ -75,7 +76,11 @@ const Profile: React.FC<ProfileProps> = ({
     return () => ac.abort();
   }, [wsBaseUrl, activeSub?.number, activeSubIndex]);
 
-  const handleLogout = () => { clearGazyomAuthToken(); localStorage.clear(); window.location.reload(); };
+  const handleLogout = () => {
+    clearGazyomAuthToken();
+    keepBannerViewsAcross(() => localStorage.clear());
+    window.location.reload();
+  };
   const inviteLink = profileReferCode ? buildInviteLink(wsBaseUrl, profileReferCode) : '';
   const [copyFailed, setCopyFailed] = useState(false);
   const canShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function';

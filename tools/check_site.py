@@ -6,7 +6,9 @@
 3. every province listed in a served state.json has an entry in src/api/config.php
 4. service-worker precache revisions match the files (tools/update_sw_revisions.py)
 5. gas24 pages carry the Google Analytics tag; sitemap.xml parses and lists existing pages
+6. the app's popup banner settings (src/my/banner.json) are usable
 """
+import datetime
 import json
 import os
 import re
@@ -81,6 +83,45 @@ def main():
             sub = re.sub(r'^https?://', '', item['baseUrl']).split('.')[0]
             if sub not in known:
                 errors.append(f'{rel}: province "{sub}" ({item["name"]}) has no entry in src/api/config.php')
+
+    # Popup banner of the app (src/my/banner.json, edited by hand): catch mistakes before users do.
+    banner_path = os.path.join(SRC, 'my', 'banner.json')
+    try:
+        with open(banner_path, encoding='utf-8') as f:
+            banners = json.load(f).get('banners')
+    except FileNotFoundError:
+        banners = []
+    except (ValueError, AttributeError):
+        banners = []  # invalid JSON is already reported above
+    if not isinstance(banners, list):
+        errors.append('my/banner.json: "banners" must be a list')
+        banners = []
+    seen_ids = set()
+    for i, b in enumerate(banners):
+        where = f'my/banner.json banner {i + 1}'
+        if not isinstance(b, dict) or not b.get('id') or not b.get('image'):
+            errors.append(f'{where}: needs "id" and "image"')
+            continue
+        if b['id'] in seen_ids:
+            errors.append(f'{where}: id "{b["id"]}" is used twice')
+        seen_ids.add(b['id'])
+        image = b['image']
+        if b.get('enabled', True) and image.startswith('/') and not os.path.exists(os.path.join(SRC, 'my', image.lstrip('/'))):
+            errors.append(f'{where}: image {image} does not exist in src/my')
+        link = (b.get('link') or '').strip()
+        if link and not (re.match(r'^https?://', link) or (link.startswith('/') and not link.startswith('//'))):
+            errors.append(f'{where}: link must start with https:// or / (got {link})')
+        if 'maxViews' in b and not (isinstance(b['maxViews'], int) and b['maxViews'] >= 1):
+            errors.append(f'{where}: maxViews must be a whole number of at least 1')
+        for key in b.get('provinces') or []:
+            if key not in known:
+                errors.append(f'{where}: unknown province "{key}"')
+        for field in ('from', 'until'):
+            if b.get(field):
+                try:
+                    datetime.datetime.fromisoformat(b[field])
+                except ValueError:
+                    errors.append(f'{where}: {field} "{b[field]}" is not a date like 2026-12-20')
 
     # Google Analytics must stay on every gas24 page (a fresh province build would drop it).
     for rel in GA_PAGES:

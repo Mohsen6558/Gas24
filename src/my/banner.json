@@ -1,0 +1,16 @@
+{
+  "banners": [
+    {
+      "id": "example-1405",
+      "enabled": false,
+      "image": "/banners/example.jpg",
+      "link": "https://my.gas24.ir/app/?tab=rewards",
+      "buttonText": "مشاهده جوایز",
+      "maxViews": 3,
+      "provinces": [],
+      "from": "2026-10-01",
+      "until": "2026-12-31",
+      "alt": "جشنواره پاییزه گازیوم"
+    }
+  ]
+}

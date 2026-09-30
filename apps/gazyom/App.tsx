@@ -24,6 +24,8 @@ import { EducationMessage, Reward, Subscription, UserLevel } from './types';
 import { ChevronRight, X, CheckCircle2 } from 'lucide-react';
 import { toPersianDigits } from './services/geminiService';
 import { fetchKeynoList, readGazyomAuthToken } from './services/wsOptimizeApi';
+import { provinceKeyFromBaseUrl } from './services/shareLinks';
+import PromoBannerModal from './components/PromoBannerModal';
 
 const VALID_TABS = new Set(['home', 'rewards', 'analysis', 'edu', 'profile']);
 const VALID_VIEWS = new Set([
@@ -440,6 +442,8 @@ const App: React.FC = () => {
       </Layout>
 
       <InstallAppPrompt />
+
+      <PromoBannerModal mobile={mobileNumber} province={provinceKeyFromBaseUrl(selectedBaseUrl)} />
 
       
       {selectedReward && (
