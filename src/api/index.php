@@ -109,6 +109,18 @@ function rateLimitRetryAfter(string $bucket, int $limit, int $window): int
 }
 
 // ========================================================================
+// پنل گزارش (src/report/) مسیر جدای خودش را دارد و به ساب‌دامین استان وابسته نیست.
+// ========================================================================
+$requestPath = $_SERVER['PATH_INFO'] ?? '';
+if ($requestPath === '') {
+    $requestPath = preg_replace('#^/api(?:/index\.php)?#', '', (string) parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH));
+}
+if ($requestPath === '/report') {
+    require __DIR__ . '/report.php';
+    exit();
+}
+
+// ========================================================================
 // ۱. CORS
 // ========================================================================
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';

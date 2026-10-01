@@ -3,3 +3,6 @@
 *.keystore
 keystore.properties
 .DS_Store
+
+# Report panel secrets (see src/api/report.local.example.php)
+src/api/report.local.php

@@ -1,0 +1,876 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>گزارش گازیوم</title>
+<link rel="icon" href="../pwa-icon.svg" type="image/svg+xml">
+<!--
+  پنل گزارش باشگاه مشتریان گازیوم. داده از /api/index.php/report می‌آید (src/api/report.php)
+  و آن هم با رمز X-Token از وب‌سرویس ws-optimize/report دفتر هر استان می‌گیرد.
+  رمز ورود این صفحه روی سرور در src/api/report.local.php است.
+-->
+<style>
+@font-face { font-family: Vazirmatn; font-weight: 400; font-display: swap; src: url(fonts/vazirmatn-arabic-400-normal.woff2) format('woff2');
+  unicode-range: U+0600-06FF, U+0750-077F, U+0870-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FEFC; }
+@font-face { font-family: Vazirmatn; font-weight: 400; font-display: swap; src: url(fonts/vazirmatn-latin-400-normal.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2212, U+FEFF, U+FFFD; }
+@font-face { font-family: Vazirmatn; font-weight: 700; font-display: swap; src: url(fonts/vazirmatn-arabic-700-normal.woff2) format('woff2');
+  unicode-range: U+0600-06FF, U+0750-077F, U+0870-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FEFC; }
+@font-face { font-family: Vazirmatn; font-weight: 700; font-display: swap; src: url(fonts/vazirmatn-latin-700-normal.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2212, U+FEFF, U+FFFD; }
+
+:root {
+  color-scheme: light;
+  --page: #f9f9f7; --surface: #fcfcfb; --raised: #ffffff;
+  --ink: #0b0b0b; --ink2: #52514e; --muted: #898781;
+  --grid: #e1e0d9; --axis: #c3c2b7; --border: rgba(11,11,11,.10); --wash: rgba(11,11,11,.04);
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s1-track: #cde2fb;
+  --accent: #ea580c; --accent-ink: #ffffff;
+  --good: #0ca30c; --good-ink: #006300; --warning: #fab219; --critical: #d03b3b;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --raised: #222221;
+    --ink: #ffffff; --ink2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,.10); --wash: rgba(255,255,255,.05);
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s1-track: #184f95;
+    --accent: #f97316; --accent-ink: #1a0a00;
+    --good-ink: #0ca30c;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--page); color: var(--ink); font: 400 14px/1.7 Vazirmatn, system-ui, -apple-system, "Segoe UI", sans-serif; }
+button, input, select { font: inherit; color: inherit; }
+[hidden] { display: none !important; }
+h1, h2, h3 { margin: 0; font-weight: 700; }
+.num, td.n { font-variant-numeric: tabular-nums; }
+
+/* login */
+.login { min-height: 100vh; display: grid; place-items: center; padding: 16px; }
+.login form { width: 100%; max-width: 360px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 28px 24px; text-align: center; }
+.login img { width: 64px; height: 64px; border-radius: 18px; }
+.login h1 { font-size: 20px; margin: 12px 0 4px; }
+.login p { margin: 0 0 18px; color: var(--ink2); }
+.login input { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--axis); background: var(--raised); text-align: center; letter-spacing: .1em; }
+.login .err { color: var(--critical); min-height: 1.7em; margin: 8px 0; }
+.btn { border: 0; border-radius: 12px; padding: 9px 18px; background: var(--accent); color: var(--accent-ink); font-weight: 700; cursor: pointer; }
+.btn.wide { width: 100%; padding: 12px; }
+.btn.ghost { background: transparent; color: var(--ink2); border: 1px solid var(--border); font-weight: 400; }
+.btn:disabled { opacity: .55; cursor: default; }
+.btn:focus-visible, input:focus-visible, select:focus-visible, .chip:focus-visible, svg:focus-visible, tr[tabindex]:focus-visible { outline: 2px solid var(--s1); outline-offset: 2px; }
+
+/* layout */
+.wrap { max-width: 1240px; margin: 0 auto; padding: 0 16px 48px; }
+.top { display: flex; align-items: center; gap: 12px; padding: 16px 0; }
+.top img { width: 40px; height: 40px; border-radius: 12px; }
+.top h1 { font-size: 18px; flex: 1; }
+.top small { display: block; color: var(--muted); font-weight: 400; font-size: 12px; }
+.filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 14px; }
+.field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.field label { font-size: 12px; color: var(--muted); }
+.field select, .field input { padding: 8px 10px; border-radius: 10px; border: 1px solid var(--axis); background: var(--raised); min-width: 0; }
+.field input { width: 120px; direction: ltr; text-align: center; }
+.field select { min-width: 170px; max-width: 100%; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid var(--border); background: var(--raised); border-radius: 999px; padding: 6px 12px; cursor: pointer; font-size: 13px; }
+.chip:hover { background: var(--wash); }
+.chip[aria-pressed="true"] { border-color: var(--s1); color: var(--s1); font-weight: 700; }
+.status { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; color: var(--ink2); font-size: 13px; margin: 12px 2px; min-height: 24px; }
+.badge { display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; padding: 1px 10px; font-size: 12px; border: 1px solid var(--border); background: var(--surface); }
+.badge i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+#content { transition: opacity .2s; }
+#content.loading { opacity: .45; pointer-events: none; }
+.alert { border-radius: 14px; padding: 12px 16px; border: 1px solid var(--border); background: var(--surface); margin-bottom: 14px; }
+.alert.error { border-color: var(--critical); }
+.alert b { display: block; }
+
+/* cards & tiles */
+.grid { display: grid; gap: 14px; grid-template-columns: repeat(12, 1fr); }
+.card { grid-column: span 12; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 16px; min-width: 0; }
+.card.half { grid-column: span 6; }
+.card header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+.card header h2 { font-size: 15px; flex: 1; }
+.card header .sub { color: var(--muted); font-size: 12px; font-weight: 400; display: block; }
+.mini { border: 1px solid var(--border); background: transparent; color: var(--ink2); border-radius: 8px; padding: 2px 10px; font-size: 12px; cursor: pointer; }
+.mini:hover { background: var(--wash); }
+.tiles { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.tile { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; }
+.tile .l { color: var(--ink2); font-size: 12px; }
+.tile .v { font-size: 22px; font-weight: 700; line-height: 1.5; }
+.tile .s { color: var(--muted); font-size: 12px; }
+.note { color: var(--muted); font-size: 12px; margin-top: 8px; }
+@media (max-width: 860px) { .card.half { grid-column: span 12; } }
+
+/* tables */
+.tw { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: right; font-weight: 400; color: var(--muted); font-size: 12px; padding: 6px 8px; border-bottom: 1px solid var(--axis); white-space: nowrap; }
+td { padding: 7px 8px; border-bottom: 1px solid var(--grid); vertical-align: middle; }
+td.n, th.n { text-align: left; white-space: nowrap; }
+tr.click { cursor: pointer; }
+tr.click:hover td { background: var(--wash); }
+tfoot td { font-weight: 700; border-top: 1px solid var(--axis); border-bottom: 0; }
+.dim { color: var(--muted); }
+
+/* bars (HTML) */
+.hb { display: grid; grid-template-columns: minmax(90px, 34%) 1fr auto; gap: 4px 10px; align-items: center; font-size: 13px; }
+.hb .lab { overflow-wrap: anywhere; }
+.hb .track { height: 14px; position: relative; }
+.hb .bar { position: absolute; inset-block: 0; right: 0; background: var(--s1); border-radius: 4px 0 0 4px; min-width: 2px; }
+.hb .val { text-align: left; white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--ink2); }
+.meter { height: 8px; border-radius: 4px; background: var(--s1-track); position: relative; min-width: 80px; }
+.meter span { position: absolute; inset-block: 0; right: 0; background: var(--s1); border-radius: 4px; }
+.cellbar { display: flex; align-items: center; gap: 8px; }
+.cellbar .meter { flex: 1; }
+
+/* charts */
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--ink2); margin-bottom: 4px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { display: inline-block; width: 14px; height: 2px; border-radius: 1px; }
+.legend i.box { height: 10px; width: 10px; border-radius: 2px; }
+.chart { direction: ltr; position: relative; }
+.chart svg { display: block; width: 100%; overflow: visible; }
+.chart text { fill: var(--muted); font-size: 11px; font-family: inherit; }
+.chart text.end { fill: var(--ink2); font-size: 12px; }
+.tip { position: fixed; z-index: 10; pointer-events: none; background: var(--raised); color: var(--ink); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; font-size: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.14); min-width: 120px; }
+.tip .t { color: var(--muted); margin-bottom: 2px; }
+.tip .r { display: flex; align-items: center; gap: 8px; }
+.tip .r b { font-size: 13px; }
+.tip .r i { width: 12px; height: 2px; display: inline-block; }
+.tip .r span { color: var(--ink2); }
+.decl { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.decl h3 { font-size: 13px; margin-bottom: 6px; }
+.decl h3 small { color: var(--muted); font-weight: 400; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; font-size: 13px; }
+.kv dt { color: var(--ink2); }
+.kv dd { margin: 0; }
+</style>
+</head>
+<body>
+
+<div id="login" class="login" hidden>
+  <form id="loginForm" autocomplete="off">
+    <img src="../pwa-icon.svg" alt="">
+    <h1>گزارش باشگاه مشتریان گازیوم</h1>
+    <p>برای دیدن گزارش رمز ورود را وارد کنید.</p>
+    <input id="password" type="password" autocomplete="current-password" aria-label="رمز ورود" required>
+    <div class="err" id="loginError" role="alert"></div>
+    <button class="btn wide" type="submit">ورود</button>
+  </form>
+</div>
+
+<div id="app" hidden>
+  <div class="wrap">
+    <header class="top">
+      <img src="../pwa-icon.svg" alt="">
+      <h1>گزارش باشگاه مشتریان گازیوم<small>آمار استان‌ها از سامانه دفتر</small></h1>
+      <button class="btn ghost" id="logout" type="button">خروج</button>
+    </header>
+
+    <section class="filters" aria-label="فیلترها">
+      <div class="field">
+        <label for="province">استان</label>
+        <select id="province"></select>
+      </div>
+      <div class="field">
+        <label>بازه زمانی</label>
+        <div class="chips" id="presets">
+          <button type="button" class="chip" data-days="7">۷ روز</button>
+          <button type="button" class="chip" data-days="30">۳۰ روز</button>
+          <button type="button" class="chip" data-days="90">۹۰ روز</button>
+          <button type="button" class="chip" data-days="year">از اول سال</button>
+          <button type="button" class="chip" data-days="365">۱۲ ماه</button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="from">از تاریخ</label>
+        <input id="from" inputmode="numeric" placeholder="1405-07-01">
+      </div>
+      <div class="field">
+        <label for="to">تا تاریخ</label>
+        <input id="to" inputmode="numeric" placeholder="1405-07-30">
+      </div>
+      <div class="field">
+        <label for="city">شهر</label>
+        <select id="city" disabled><option value="">همه شهرها</option></select>
+      </div>
+      <button class="btn" id="apply" type="button">نمایش</button>
+      <button class="btn ghost" id="refresh" type="button" title="بدون کش، دوباره از سرور استان بگیر">به‌روزرسانی</button>
+    </section>
+
+    <div class="status" id="status" aria-live="polite"></div>
+    <main id="content"></main>
+  </div>
+</div>
+<div class="tip" id="tip" role="tooltip" hidden></div>
+
+<script>
+(function () {
+  'use strict';
+  var API = '../api/index.php/report';
+  var FA = '۰۱۲۳۴۵۶۷۸۹';
+
+  // ------------------------------------------------------------ helpers
+  function $(id) { return document.getElementById(id); }
+  function el(tag, attrs, children) {
+    var node = document.createElement(tag);
+    if (attrs) Object.keys(attrs).forEach(function (k) {
+      if (k === 'text') node.textContent = attrs[k];
+      else if (k === 'class') node.className = attrs[k];
+      else if (k === 'style') node.setAttribute('style', attrs[k]);
+      else if (k.slice(0, 2) === 'on') node.addEventListener(k.slice(2), attrs[k]);
+      else if (attrs[k] !== null && attrs[k] !== undefined && attrs[k] !== false) node.setAttribute(k, attrs[k]);
+    });
+    (children || []).forEach(function (c) { if (c !== null && c !== undefined) node.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); });
+    return node;
+  }
+  function svgEl(tag, attrs) {
+    var node = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    Object.keys(attrs || {}).forEach(function (k) { node.setAttribute(k, attrs[k]); });
+    return node;
+  }
+  function faDigits(s) { return String(s).replace(/\d/g, function (d) { return FA[d]; }); }
+  function enDigits(s) {
+    return String(s).replace(/[۰-۹]/g, function (d) { return FA.indexOf(d); })
+      .replace(/[٠-٩]/g, function (d) { return '٠١٢٣٤٥٦٧٨٩'.indexOf(d); });
+  }
+  function fmt(n) { return n === null || n === undefined || n === '' ? '—' : Number(n).toLocaleString('fa-IR'); }
+  function compact(n) {
+    n = Number(n || 0);
+    if (Math.abs(n) >= 1e6) return (Math.round(n / 1e5) / 10).toLocaleString('fa-IR') + ' میلیون';
+    return n.toLocaleString('fa-IR');
+  }
+  function pct(part, whole) { return whole ? (Math.round(1000 * part / whole) / 10).toLocaleString('fa-IR') + '٪' : '—'; }
+  var MONTHS = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
+  // 1405-07-09 → ۱۴۰۵/۰۷/۰۹ ؛ سطل ماهانه 1405-07 → مهر ۱۴۰۵
+  function dateLabel(s) {
+    if (!s) return '—';
+    var m = String(s).match(/^(\d{4})-(\d{2})$/);
+    return m ? MONTHS[Number(m[2]) - 1] + ' ' + faDigits(m[1]) : faDigits(String(s).replace(/-/g, '/'));
+  }
+  // متن چپ‌به‌راست (شماره اشتراک و موبایل ماسک‌شده) تا ترتیب ارقام و ستاره به هم نریزد
+  function ltr(text) { return el('bdi', { dir: 'ltr', text: text || '—' }); }
+
+  // تاریخ شمسی امروز و n روز قبل (ساعت تهران)
+  var jfmt = new Intl.DateTimeFormat('en-US-u-ca-persian-nu-latn', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'Asia/Tehran' });
+  function jalali(date) {
+    var p = {};
+    jfmt.formatToParts(date).forEach(function (x) { p[x.type] = x.value; });
+    return p.year + '-' + p.month + '-' + p.day;
+  }
+  function daysAgo(n) { return jalali(new Date(Date.now() - n * 86400000)); }
+  function normDate(s) {
+    var m = enDigits(s || '').trim().match(/^(1[34]\d\d)[-/.](\d{1,2})[-/.](\d{1,2})$/);
+    if (!m) return null;
+    return m[1] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[3]).slice(-2);
+  }
+
+  function api(op, params, body) {
+    var q = new URLSearchParams(Object.assign({ op: op }, params || {}));
+    var opts = { method: body ? 'POST' : 'GET', credentials: 'same-origin', cache: 'no-store', headers: { 'X-Gas24-Report': '1' } };
+    if (body) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+    return fetch(API + '?' + q.toString(), opts).then(function (res) {
+      return res.json().catch(function () { return null; }).then(function (data) {
+        if (!res.ok || !data || data.success === false) {
+          var err = new Error((data && (data.message || data.msg)) || ('خطای ' + res.status + ' از سرور'));
+          err.status = res.status;
+          err.loginRequired = !!(data && data.loginRequired);
+          throw err;
+        }
+        return data;
+      });
+    }, function () { throw new Error('ارتباط با سرور برقرار نشد.'); });
+  }
+
+  function csv(name, head, rows) {
+    var lines = [head].concat(rows).map(function (r) {
+      return r.map(function (v) { v = v === null || v === undefined ? '' : String(v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(',');
+    });
+    var blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+    var a = el('a', { href: URL.createObjectURL(blob), download: name + '.csv' });
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+  }
+
+  // ------------------------------------------------------------ tooltip
+  var tip = $('tip');
+  function showTip(x, y, title, rows) {
+    tip.textContent = '';
+    tip.appendChild(el('div', { class: 't', text: title }));
+    rows.forEach(function (r) {
+      tip.appendChild(el('div', { class: 'r' }, [el('i', { style: 'background:' + r.color }), el('b', { text: r.value }), el('span', { text: r.name })]));
+    });
+    tip.hidden = false;
+    var w = tip.offsetWidth, h = tip.offsetHeight;
+    var left = Math.min(window.innerWidth - w - 8, Math.max(8, x + 14));
+    var top = y - h - 12 < 8 ? y + 16 : y - h - 12;
+    tip.style.left = left + 'px'; tip.style.top = top + 'px';
+  }
+  function hideTip() { tip.hidden = true; }
+
+  // ------------------------------------------------------------ charts (SVG)
+  function niceMax(v) {
+    if (v <= 0) return 4;
+    var p = Math.pow(10, Math.floor(Math.log10(v))), m = v / p;
+    var step = m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10;
+    return step * p;
+  }
+  function shortLabel(label, interval) {
+    var parts = String(label).split('-');
+    return interval === 'month' ? MONTHS[Number(parts[1]) - 1] + ' ' + faDigits(parts[0].slice(2)) : faDigits(parts[1] + '/' + parts[2]);
+  }
+  function seriesColor(i) { return 'var(--s' + (i + 1) + ')'; }
+
+  // کادر نمودار با محور، شبکه و برچسب‌ها؛ draw(ctx) خود داده را می‌کشد
+  function chartFrame(box, labels, interval, maxValue, draw, onIndex) {
+    var render = function () {
+      box.textContent = '';
+      var W = Math.max(280, box.clientWidth), H = 230;
+      var m = { l: 46, r: 44, t: 12, b: 26 };
+      var iw = W - m.l - m.r, ih = H - m.t - m.b;
+      var max = niceMax(maxValue);
+      var svg = svgEl('svg', { viewBox: '0 0 ' + W + ' ' + H, height: H, tabindex: 0, role: 'img' });
+      for (var g = 0; g <= 4; g++) {
+        var gy = m.t + ih - ih * g / 4;
+        svg.appendChild(svgEl('line', { x1: m.l, x2: m.l + iw, y1: gy, y2: gy, stroke: g === 0 ? 'var(--axis)' : 'var(--grid)', 'stroke-width': 1 }));
+        var t = svgEl('text', { x: m.l - 8, y: gy + 4, 'text-anchor': 'end' });
+        t.textContent = compact(max * g / 4);
+        svg.appendChild(t);
+      }
+      var n = labels.length;
+      var slot = iw / Math.max(1, n);
+      var xAt = function (i) { return m.l + slot * (i + 0.5); };
+      var every = Math.max(1, Math.ceil(n / Math.max(2, Math.floor(iw / 64))));
+      for (var i = 0; i < n; i += every) {
+        var tx = svgEl('text', { x: xAt(i), y: H - 6, 'text-anchor': 'middle' });
+        tx.textContent = shortLabel(labels[i], interval);
+        svg.appendChild(tx);
+      }
+      var ctx = { svg: svg, W: W, H: H, m: m, iw: iw, ih: ih, max: max, slot: slot, xAt: xAt, yAt: function (v) { return m.t + ih - ih * v / max; } };
+      draw(ctx);
+      box.appendChild(svg);
+      if (onIndex) onIndex(ctx);
+    };
+    render();
+    var lastW = box.clientWidth;
+    if (window.ResizeObserver) new ResizeObserver(function () { if (Math.abs(box.clientWidth - lastW) > 4) { lastW = box.clientWidth; render(); } }).observe(box);
+  }
+
+  // نمودار خطی با خط راهنمای عمودی و راهنمای کامل همه سری‌ها
+  function lineChart(series, labels, interval) {
+    var box = el('div', { class: 'chart' });
+    var max = 0;
+    series.forEach(function (s) { s.values.forEach(function (v) { max = Math.max(max, v); }); });
+    chartFrame(box, labels, interval, max, function (c) {
+      var ends = [];
+      series.forEach(function (s, si) {
+        var d = s.values.map(function (v, i) { return (i ? 'L' : 'M') + c.xAt(i).toFixed(1) + ' ' + c.yAt(v).toFixed(1); }).join(' ');
+        c.svg.appendChild(svgEl('path', { d: d, fill: 'none', stroke: seriesColor(s.slot), 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
+        var li = s.values.length - 1;
+        c.svg.appendChild(svgEl('circle', { cx: c.xAt(li), cy: c.yAt(s.values[li]), r: 4, fill: seriesColor(s.slot), stroke: 'var(--surface)', 'stroke-width': 2 }));
+        ends.push({ y: c.yAt(s.values[li]), v: s.values[li], x: c.xAt(li) });
+      });
+      // برچسب انتهای خط فقط وقتی با برچسب دیگری روی هم نیفتد
+      ends.forEach(function (e, i) {
+        var clash = ends.some(function (o, j) { return j !== i && Math.abs(o.y - e.y) < 14; });
+        if (clash) return;
+        var t = svgEl('text', { x: e.x + 8, y: e.y + 4, class: 'end' });
+        t.textContent = compact(e.v);
+        c.svg.appendChild(t);
+      });
+    }, function (c) {
+      var guide = svgEl('line', { y1: c.m.t, y2: c.m.t + c.ih, stroke: 'var(--muted)', 'stroke-width': 1, visibility: 'hidden' });
+      c.svg.appendChild(guide);
+      var hit = svgEl('rect', { x: c.m.l, y: c.m.t, width: c.iw, height: c.ih, fill: 'transparent' });
+      c.svg.appendChild(hit);
+      var current = labels.length - 1;
+      var show = function (i, cx, cy) {
+        current = i;
+        guide.setAttribute('x1', c.xAt(i)); guide.setAttribute('x2', c.xAt(i)); guide.setAttribute('visibility', 'visible');
+        showTip(cx, cy, dateLabel(labels[i]), series.map(function (s) { return { color: seriesColor(s.slot), value: fmt(s.values[i]), name: s.name }; }));
+      };
+      var hide = function () { guide.setAttribute('visibility', 'hidden'); hideTip(); };
+      hit.addEventListener('pointermove', function (ev) {
+        var r = c.svg.getBoundingClientRect(), scale = c.W / r.width;
+        var i = Math.max(0, Math.min(labels.length - 1, Math.floor(((ev.clientX - r.left) * scale - c.m.l) / c.slot)));
+        show(i, ev.clientX, ev.clientY);
+      });
+      hit.addEventListener('pointerleave', hide);
+      c.svg.addEventListener('blur', hide);
+      c.svg.addEventListener('keydown', function (ev) {
+        if (ev.key !== 'ArrowLeft' && ev.key !== 'ArrowRight') return;
+        ev.preventDefault();
+        var i = Math.max(0, Math.min(labels.length - 1, current + (ev.key === 'ArrowRight' ? 1 : -1)));
+        var r = c.svg.getBoundingClientRect(), scale = r.width / c.W;
+        show(i, r.left + c.xAt(i) * scale, r.top + c.m.t * scale + 20);
+      });
+    });
+    return box;
+  }
+
+  // ستون‌های گروهی؛ اگر سطل‌ها زیاد باشند خطی کشیده می‌شود
+  function columnChart(series, labels, interval) {
+    if (labels.length > 62) return lineChart(series, labels, interval);
+    var box = el('div', { class: 'chart' });
+    var max = 0;
+    series.forEach(function (s) { s.values.forEach(function (v) { max = Math.max(max, v); }); });
+    chartFrame(box, labels, interval, max, function (c) {
+      var k = series.length;
+      var bw = Math.max(1, Math.min(24, (c.slot * 0.75 - 2 * (k - 1)) / k));
+      var group = bw * k + 2 * (k - 1);
+      labels.forEach(function (label, i) {
+        series.forEach(function (s, si) {
+          var v = s.values[i];
+          var x = c.xAt(i) - group / 2 + si * (bw + 2);
+          var y = c.yAt(v), base = c.m.t + c.ih, h = base - y;
+          var r = Math.min(4, bw / 2, h);
+          var d = h <= 0 ? '' : 'M' + x + ' ' + base + 'V' + (y + r) + 'Q' + x + ' ' + y + ' ' + (x + r) + ' ' + y + 'H' + (x + bw - r) + 'Q' + (x + bw) + ' ' + y + ' ' + (x + bw) + ' ' + (y + r) + 'V' + base + 'Z';
+          if (d) c.svg.appendChild(svgEl('path', { d: d, fill: seriesColor(s.slot) }));
+          var hit = svgEl('rect', { x: c.xAt(i) - c.slot / 2 + si * c.slot / k, y: c.m.t, width: c.slot / k, height: c.ih, fill: 'transparent' });
+          hit.addEventListener('pointermove', function (ev) {
+            showTip(ev.clientX, ev.clientY, dateLabel(label), [{ color: seriesColor(s.slot), value: fmt(v), name: s.name }]);
+          });
+          hit.addEventListener('pointerleave', hideTip);
+          c.svg.appendChild(hit);
+        });
+      });
+    });
+    return box;
+  }
+
+  function legend(series, box) {
+    return el('div', { class: 'legend' }, series.map(function (s) {
+      return el('span', {}, [el('i', { class: box ? 'box' : '', style: 'background:' + seriesColor(s.slot) }), s.name]);
+    }));
+  }
+
+  // ------------------------------------------------------------ building blocks
+  function card(title, sub, body, opts) {
+    opts = opts || {};
+    var head = el('header', {}, [el('h2', {}, [title, sub ? el('span', { class: 'sub', text: sub }) : null])].concat(opts.actions || []));
+    return el('section', { class: 'card' + (opts.half ? ' half' : '') }, [head].concat(body));
+  }
+  function tile(label, value, sub) {
+    return el('div', { class: 'tile' }, [el('div', { class: 'l', text: label }), el('div', { class: 'v', text: value }), sub ? el('div', { class: 's', text: sub }) : null]);
+  }
+  // جدول: cols = [{t: عنوان, n: عددی؟, f: row => مقدار یا گره}]
+  function table(cols, rows, opts) {
+    opts = opts || {};
+    var head = el('tr', {}, cols.map(function (c) { return el('th', { class: c.n ? 'n' : '', text: c.t }); }));
+    var body = rows.map(function (r) {
+      var tr = el('tr', opts.onRow ? { class: 'click', tabindex: 0 } : {}, cols.map(function (c) {
+        var v = c.f(r);
+        return el('td', { class: c.n ? 'n' : '' }, [v instanceof Node ? v : String(v === null || v === undefined ? '—' : v)]);
+      }));
+      if (opts.onRow) {
+        tr.addEventListener('click', function () { opts.onRow(r); });
+        tr.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') opts.onRow(r); });
+      }
+      return tr;
+    });
+    var parts = [el('thead', {}, [head]), el('tbody', {}, body)];
+    if (opts.foot) parts.push(el('tfoot', {}, [el('tr', {}, cols.map(function (c, i) { return el('td', { class: c.n ? 'n' : '', text: opts.foot[i] === undefined ? '' : opts.foot[i] }); }))]));
+    return el('div', { class: 'tw' }, [el('table', {}, parts)]);
+  }
+  function csvButton(name, cols, rows, raw) {
+    return el('button', { type: 'button', class: 'mini', text: 'دریافت CSV', onclick: function () {
+      csv(name, cols.map(function (c) { return c.t; }), rows.map(function (r) { return cols.map(function (c) { return raw ? raw(c, r) : (c.csv ? c.csv(r) : c.f(r)); }); }));
+    } });
+  }
+  function hbars(items, total) {
+    var max = Math.max.apply(null, items.map(function (x) { return x.value; }).concat([1]));
+    return el('div', { class: 'hb' }, items.reduce(function (acc, x) {
+      acc.push(el('div', { class: 'lab', text: x.label }));
+      acc.push(el('div', { class: 'track' }, [el('div', { class: 'bar', style: 'width:' + (100 * x.value / max).toFixed(2) + '%' })]));
+      acc.push(el('div', { class: 'val', text: fmt(x.value) + (total ? ' · ' + pct(x.value, total) : '') }));
+      return acc;
+    }, []));
+  }
+  function meter(part, whole) {
+    return el('div', { class: 'meter', role: 'img', 'aria-label': fmt(part) + ' از ' + fmt(whole) }, [el('span', { style: 'width:' + (whole ? (100 * part / whole).toFixed(1) : 0) + '%' })]);
+  }
+  function statusBadge(kind, text) {
+    var color = kind === 'good' ? 'var(--good)' : kind === 'warning' ? 'var(--warning)' : 'var(--critical)';
+    var icon = kind === 'good' ? '✓' : kind === 'warning' ? '!' : '✕';
+    return el('span', { class: 'badge' }, [el('i', { style: 'background:' + color }), icon + ' ' + text]);
+  }
+  // سری زمانی با دکمه جدول (دسترس‌پذیری) و CSV
+  function seriesCard(title, sub, series, labels, interval, kind, file) {
+    var chart = kind === 'col' ? columnChart(series, labels, interval) : lineChart(series, labels, interval);
+    var cols = [{ t: 'تاریخ', f: function (i) { return dateLabel(labels[i]); }, csv: function (i) { return labels[i]; } }].concat(series.map(function (s) {
+      return { t: s.name, n: true, f: function (i) { return fmt(s.values[i]); }, csv: function (i) { return s.values[i]; } };
+    }));
+    var idx = labels.map(function (_, i) { return i; });
+    var tbl = table(cols, idx);
+    tbl.hidden = true;
+    var toggle = el('button', { type: 'button', class: 'mini', text: 'جدول', onclick: function () { tbl.hidden = !tbl.hidden; toggle.textContent = tbl.hidden ? 'جدول' : 'نمودار'; chart.hidden = !tbl.hidden; } });
+    return card(title, sub, [legend(series, kind === 'col'), chart, tbl], { actions: [toggle, csvButton(file, cols, idx)] });
+  }
+
+  // ------------------------------------------------------------ state
+  var state = { provinces: [], cities: {}, view: null };
+  var content = $('content');
+
+  function readHash() {
+    var p = new URLSearchParams(location.hash.slice(1));
+    return { province: p.get('p') || '', from: normDate(p.get('from')), to: normDate(p.get('to')), city: p.get('city') || '' };
+  }
+  function writeHash(f) {
+    var p = new URLSearchParams();
+    if (f.province) p.set('p', f.province);
+    p.set('from', f.from); p.set('to', f.to);
+    if (f.city) p.set('city', f.city);
+    history.replaceState(null, '', '#' + p.toString());
+  }
+  function filters() {
+    return { province: $('province').value, from: normDate($('from').value), to: normDate($('to').value), city: $('city').value };
+  }
+  function markPreset() {
+    var f = filters();
+    Array.prototype.forEach.call(document.querySelectorAll('#presets .chip'), function (b) {
+      var d = b.dataset.days;
+      var from = d === 'year' ? f.to && f.to.slice(0, 4) + '-01-01' : daysAgo(Number(d) - 1);
+      b.setAttribute('aria-pressed', String(f.to === daysAgo(0) && f.from === from));
+    });
+  }
+  function setStatus(nodes) { var s = $('status'); s.textContent = ''; nodes.forEach(function (n) { s.appendChild(typeof n === 'string' ? document.createTextNode(n) : n); }); }
+
+  function fillCities(provinceKey, rows) {
+    var select = $('city'), keep = select.value;
+    if (rows) state.cities[provinceKey] = rows;
+    var list = state.cities[provinceKey] || [];
+    select.textContent = '';
+    select.appendChild(el('option', { value: '', text: 'همه شهرها' }));
+    list.forEach(function (c) { if (c.id !== null) select.appendChild(el('option', { value: String(c.id), text: c.name })); });
+    select.value = list.some(function (c) { return String(c.id) === keep; }) ? keep : '';
+    select.disabled = !provinceKey || !list.length;
+  }
+
+  // ------------------------------------------------------------ views
+  function load(refresh) {
+    var f = filters();
+    if (!f.from || !f.to) { setStatus([statusBadge('critical', 'تاریخ را به شکل 1405-07-01 وارد کنید.')]); return; }
+    writeHash(f); markPreset(); hideTip();
+    var params = { from: f.from, to: f.to };
+    if (refresh) params.refresh = '1';
+    content.classList.add('loading');
+    $('apply').disabled = $('refresh').disabled = true;
+    setStatus(['در حال گرفتن گزارش از ' + (f.province ? 'سرور استان' : 'سرور همه استان‌ها') + '…']);
+    var req = f.province
+      ? api('report', Object.assign(params, { province: f.province }, f.city ? { cityId: f.city } : {})).then(function (d) { renderProvince(d, f); })
+      : api('compare', params).then(function (d) { renderCompare(d, f); });
+    req.catch(function (err) {
+      if (err.loginRequired) return showLogin();
+      setStatus([statusBadge('critical', 'خطا')]);
+      content.textContent = '';
+      content.appendChild(el('div', { class: 'alert error' }, [el('b', { text: 'گزارش گرفته نشد' }), err.message]));
+    }).then(function () {
+      content.classList.remove('loading');
+      $('apply').disabled = $('refresh').disabled = false;
+    });
+  }
+
+  function renderCompare(d, f) {
+    content.textContent = '';
+    var rows = d.rows;
+    var full = rows.filter(function (r) { return r.mode === 'full'; }).length;
+    var basic = rows.filter(function (r) { return r.mode === 'basic'; }).length;
+    var bad = rows.filter(function (r) { return r.mode === 'error'; }).length;
+    setStatus([
+      'بازه ' + dateLabel(f.from) + ' تا ' + dateLabel(f.to),
+      statusBadge('good', faDigits(full) + ' استان کامل'),
+      basic ? statusBadge('warning', faDigits(basic) + ' استان فقط آمار کلی') : '',
+      bad ? statusBadge('critical', faDigits(bad) + ' استان خطا') : '',
+    ]);
+    var val = function (r, key) {
+      if (r.mode === 'full') return r.overview[key];
+      if (r.mode !== 'basic') return null;
+      var b = r.basic;
+      return { subscriptions: b.keyno && b.keyno.total, tokenBalance: b.keyno && b.keyno.extra.total_tokens_system, redemptions: b.rewards && b.rewards.extra.total_redeemed, karkard: b.karkard && b.karkard.total }[key];
+    };
+    var modeCell = function (r) {
+      return r.mode === 'full' ? statusBadge('good', 'کامل') : r.mode === 'basic' ? statusBadge('warning', 'پایه') : r.mode === 'none' ? el('span', { class: 'dim', text: 'متصل نیست' }) : statusBadge('critical', 'خطا');
+    };
+    var num = function (key) { return function (r) { return fmt(val(r, key)); }; };
+    var cols = [
+      { t: 'استان', f: function (r) { return r.name; } },
+      { t: 'وضعیت', f: modeCell, csv: function (r) { return r.mode; } },
+      { t: 'اشتراک', n: true, f: num('subscriptions'), csv: function (r) { return val(r, 'subscriptions'); } },
+      { t: 'کاربر', n: true, f: num('users'), csv: function (r) { return val(r, 'users'); } },
+      { t: 'ثبت‌نام در بازه', n: true, f: num('newSubscriptions'), csv: function (r) { return val(r, 'newSubscriptions'); } },
+      { t: 'فعال در بازه', n: true, f: num('activeUsers'), csv: function (r) { return val(r, 'activeUsers'); } },
+      { t: 'امتیاز داده‌شده', n: true, f: num('tokensEarned'), csv: function (r) { return val(r, 'tokensEarned'); } },
+      { t: 'جایزه', n: true, f: num('redemptions'), csv: function (r) { return val(r, 'redemptions'); } },
+      { t: 'کارکرد', n: true, f: num('karkard'), csv: function (r) { return val(r, 'karkard'); } },
+      { t: 'آخرین فعالیت', f: function (r) { return r.health && r.health.lastToken.date ? dateLabel(r.health.lastToken.date) : (r.error || '—'); } },
+    ];
+    var sum = function (key) { return rows.reduce(function (a, r) { var v = val(r, key); return a + (Number(v) || 0); }, 0); };
+    var foot = ['جمع', '', fmt(sum('subscriptions')), fmt(sum('users')), fmt(sum('newSubscriptions')), fmt(sum('activeUsers')), fmt(sum('tokensEarned')), fmt(sum('redemptions')), fmt(sum('karkard')), ''];
+    var open = function (r) { if (r.mode === 'full' || r.mode === 'basic') { $('province').value = r.key; fillCities(r.key); load(false); } };
+
+    var grid = el('div', { class: 'grid' });
+    grid.appendChild(card('مقایسه استان‌ها', 'برای جزئیات روی هر استان بزنید', [
+      table(cols, rows, { foot: foot, onRow: open }),
+      el('div', { class: 'note', text: 'ستون‌های جایزه و کارکرد برای استان‌های «پایه» (دفترِ هنوز به‌روزنشده) کل دوره است، نه بازه انتخابی؛ جایزه در این حالت تقریبی است.' }),
+    ], { actions: [csvButton('gazyom-provinces-' + f.from + '_' + f.to, cols, rows)] }));
+    var bars = rows.filter(function (r) { return val(r, 'subscriptions'); }).map(function (r) { return { label: r.name, value: Number(val(r, 'subscriptions')) }; })
+      .sort(function (a, b) { return b.value - a.value; });
+    if (bars.length) grid.appendChild(card('اشتراک‌های ثبت‌شده در گازیوم', 'به تفکیک استان', [hbars(bars, sum('subscriptions'))]));
+    content.appendChild(grid);
+  }
+
+  function renderBasic(d) {
+    var b = d.data;
+    var get = function (t, k) { return b[t] ? (k ? b[t].extra[k] : b[t].total) : null; };
+    var grid = el('div', { class: 'grid' });
+    grid.appendChild(el('div', { class: 'alert', style: 'grid-column: span 12' }, [
+      el('b', { text: 'فقط آمار کلی' }),
+      'سامانه دفتر استان ' + d.province.name + ' هنوز وب‌سرویس گزارش (ws-optimize/report) را ندارد؛ این اعداد کل دوره‌اند و فیلتر تاریخ و شهر روی آن‌ها اثری ندارد. با به‌روزرسانی دفتر، گزارش کامل خودکار نمایش داده می‌شود.',
+    ]));
+    grid.appendChild(el('div', { class: 'tiles', style: 'grid-column: span 12' }, [
+      tile('اشتراک‌های ثبت‌شده', fmt(get('keyno'))),
+      tile('موجودی امتیاز همه', compact(get('keyno', 'total_tokens_system'))),
+      tile('تراکنش‌های امتیاز', fmt(get('tokens'))),
+      tile('جوایز داده‌شده', fmt(get('rewards', 'total_redeemed')), 'تقریبی'),
+      tile('کدهای انبار جایزه', fmt(get('rewards'))),
+      tile('اعلام کارکرد', fmt(get('karkard'))),
+      tile('ماموریت‌های دیده‌شده', fmt(get('hints'))),
+      tile('فرم‌های ممیزی ساختمان', fmt(get('declarations'))),
+    ]));
+    content.appendChild(grid);
+  }
+
+  function renderProvince(d, f) {
+    content.textContent = '';
+    var r = d.data;
+    setStatus([
+      el('b', { text: d.province.name }),
+      d.mode === 'full' ? 'بازه ' + dateLabel(r.range.from) + ' تا ' + dateLabel(r.range.to) + ' (' + faDigits(r.range.days) + ' روز)' : '',
+      r.city ? 'شهر ' + r.city.name : '',
+      d.mode === 'full' ? statusBadge('good', 'گزارش کامل') : statusBadge('warning', 'آمار کلی'),
+      d.mode === 'full' ? el('span', { class: 'dim', text: 'تهیه‌شده ' + dateLabel(r.generatedAt) + (d.cached ? ' (از کش)' : '') }) : '',
+    ]);
+    if (d.mode !== 'full') { fillCities(d.province.key, []); return renderBasic(d); }
+    if (!f.city && r.cities) fillCities(d.province.key, r.cities.rows);
+    if (r.city) {
+      var option = $('city').querySelector('option[value="' + r.city.id + '"]');
+      if (option) option.textContent = r.city.name;
+    }
+
+    var o = r.overview, grid = el('div', { class: 'grid' });
+    grid.appendChild(el('div', { class: 'tiles', style: 'grid-column: span 12' }, [
+      tile('اشتراک‌ها', fmt(o.subscriptions), fmt(o.users) + ' کاربر (موبایل)'),
+      tile('ثبت‌نام در بازه', fmt(o.newSubscriptions), fmt(o.newUsers) + ' کاربر تازه'),
+      tile('کاربران فعال در بازه', fmt(o.activeUsers), pct(o.activeUsers, o.subscriptions) + ' از اشتراک‌ها'),
+      tile('فعال ۷ روز اخیر', fmt(o.active7), 'فعال ۳۰ روز: ' + fmt(o.active30)),
+      tile('امتیاز داده‌شده', compact(o.tokensEarned)),
+      tile('امتیاز خرج‌شده', compact(o.tokensSpent)),
+      tile('موجودی امتیاز همه', compact(o.tokenBalance)),
+      tile('جایزه دریافت‌شده', fmt(o.redemptions)),
+      tile('اعلام کارکرد', fmt(o.karkard)),
+      tile('گردونه شانس', fmt(o.spins)),
+      tile('دعوت موفق', fmt(o.referrals)),
+      tile('ماموریت دیده‌شده', fmt(o.hintsSeen)),
+      tile('امتیاز پیام و آموزش', fmt(o.messageClaims)),
+      tile('فرم ممیزی ساختمان', fmt(o.declarations), 'کل دوره'),
+    ]));
+
+    var ts = r.timeseries, L = ts.labels, S = ts.series, iv = ts.interval;
+    var per = iv === 'month' ? 'ماهانه' : 'روزانه';
+    var file = 'gazyom-' + d.province.key + '-' + r.range.from + '_' + r.range.to;
+    grid.appendChild(seriesCard('ثبت‌نام و کاربران فعال', per, [
+      { name: 'ثبت‌نام', slot: 0, values: S.registrations }, { name: 'کاربر فعال', slot: 1, values: S.active },
+    ], L, iv, 'line', file + '-users'));
+    grid.appendChild(seriesCard('امتیاز داده‌شده و خرج‌شده', per, [
+      { name: 'داده‌شده', slot: 0, values: S.earned }, { name: 'خرج‌شده', slot: 1, values: S.spent },
+    ], L, iv, 'col', file + '-tokens'));
+    grid.appendChild(seriesCard('فعالیت‌ها', per, [
+      { name: 'اعلام کارکرد', slot: 0, values: S.karkard }, { name: 'جایزه', slot: 1, values: S.redemptions },
+      { name: 'گردونه', slot: 2, values: S.spins }, { name: 'ماموریت', slot: 3, values: S.hints },
+    ], L, iv, 'line', file + '-activity'));
+
+    // امتیاز به تفکیک نوع
+    var tk = r.tokens;
+    var tokenCols = [
+      { t: 'نوع', f: function (x) { return x.label; } },
+      { t: 'تعداد', n: true, f: function (x) { return fmt(x.count); }, csv: function (x) { return x.count; } },
+      { t: 'کاربر', n: true, f: function (x) { return fmt(x.users); }, csv: function (x) { return x.users; } },
+      { t: 'امتیاز داده‌شده', n: true, f: function (x) { return fmt(x.earned); }, csv: function (x) { return x.earned; } },
+      { t: 'امتیاز کسرشده', n: true, f: function (x) { return fmt(x.spent); }, csv: function (x) { return x.spent; } },
+    ];
+    grid.appendChild(card('امتیاز به تفکیک نوع', 'داخل بازه', [
+      hbars(tk.rows.filter(function (x) { return x.earned > 0; }).map(function (x) { return { label: x.label, value: x.earned }; }), tk.earned),
+      el('div', { style: 'height:12px' }),
+      table(tokenCols, tk.rows, { foot: ['جمع', fmt(tk.rows.reduce(function (a, x) { return a + x.count; }, 0)), '', fmt(tk.earned), fmt(tk.spent)] }),
+    ], { half: true, actions: [csvButton(file + '-token-types', tokenCols, tk.rows)] }));
+
+    // قیف
+    var fu = r.funnel, reg = fu[0] ? fu[0].count : 0;
+    grid.appendChild(card('فعال‌شدن اشتراک‌های جدید', 'از اشتراک‌هایی که داخل بازه ثبت شده‌اند، چند درصد تا امروز این کار را کرده‌اند', [
+      hbars(fu.map(function (x) { return { label: x.label, value: x.count }; }), reg),
+    ], { half: true }));
+
+    // جوایز
+    var rw = r.rewards;
+    var rewardCols = [
+      { t: 'جایزه', f: function (x) { return x.title; } },
+      { t: 'دسته', f: function (x) { return x.category || '—'; } },
+      { t: 'قیمت (امتیاز)', n: true, f: function (x) { return fmt(x.token); }, csv: function (x) { return x.token; } },
+      { t: 'وضعیت', f: function (x) { return x.active ? statusBadge('good', 'فعال') : el('span', { class: 'dim', text: x.end ? 'تا ' + dateLabel(x.end) : 'غیرفعال' }); }, csv: function (x) { return x.active ? 'فعال' : 'غیرفعال'; } },
+      { t: 'موجودی انبار', f: function (x) { return x.stock ? el('div', { class: 'cellbar' }, [meter(x.free, x.stock), el('span', { class: 'num', text: fmt(x.free) + ' از ' + fmt(x.stock) })]) : '—'; }, csv: function (x) { return x.free + '/' + x.stock; } },
+      { t: 'دریافت در بازه', n: true, f: function (x) { return fmt(x.assignedInRange); }, csv: function (x) { return x.assignedInRange; } },
+      { t: 'دریافت کل', n: true, f: function (x) { return fmt(x.assigned); }, csv: function (x) { return x.assigned; } },
+      { t: 'امتیاز خرج‌شده در بازه', n: true, f: function (x) { return fmt(x.tokensInRange); }, csv: function (x) { return x.tokensInRange; } },
+    ];
+    grid.appendChild(card('جوایز', fmt(rw.assignedInRange) + ' دریافت در بازه · ' + fmt(rw.free) + ' کد آزاد در انبار', [table(rewardCols, rw.rows)], { actions: [csvButton(file + '-rewards', rewardCols, rw.rows)] }));
+
+    // کارکرد
+    var kk = r.karkard;
+    grid.appendChild(card('اعلام کارکرد کنتور', 'داخل بازه', [
+      el('div', { class: 'tiles' }, [
+        tile('اعلام کارکرد', fmt(kk.total)),
+        tile('اشتراک یکتا', fmt(kk.users)),
+        tile('همراه با تصویر', pct(kk.withImage, kk.total), fmt(kk.withImage) + ' مورد'),
+        tile('خوانده‌شده با هوش مصنوعی', pct(kk.aiRead, kk.total), fmt(kk.aiRead) + ' مورد'),
+        tile('تطابق هوش مصنوعی', pct(kk.aiMatch, kk.aiRead), 'رقم تشخیصی = رقم کاربر'),
+      ]),
+    ], { half: true }));
+
+    // سلامت
+    var h = r.health;
+    var lastRow = function (label, v) {
+      var stale = !v.unix || Date.now() / 1000 - v.unix > 3 * 86400;
+      return [el('dt', { text: label }), el('dd', {}, [dateLabel(v.date), ' ', v.unix ? (stale ? statusBadge('warning', 'بیش از ۳ روز') : statusBadge('good', 'فعال')) : el('span', { class: 'dim', text: 'ندارد' })])];
+    };
+    grid.appendChild(card('وضعیت سامانه استان', 'آخرین فعالیت هر بخش', [
+      el('dl', { class: 'kv' }, [].concat(
+        lastRow('آخرین ثبت اشتراک', h.lastRegistration), lastRow('آخرین تراکنش امتیاز', h.lastToken),
+        lastRow('آخرین اعلام کارکرد', h.lastKarkard), lastRow('آخرین دریافت جایزه', h.lastRedemption),
+        lastRow('آخرین ماموریت دیده‌شده', h.lastHintSeen),
+        [el('dt', { text: 'ساعت سرور دفتر' }), el('dd', { text: dateLabel(h.serverTime) })],
+        [el('dt', { text: 'نسخه دفتر' }), el('dd', { text: faDigits(h.version || '—') })]
+      )),
+    ], { half: true }));
+
+    // شهرها
+    var cities = r.cities.rows;
+    var cityCols = [
+      { t: 'شهر', f: function (x) { return x.name; } },
+      { t: 'اشتراک', n: true, f: function (x) { return fmt(x.subscriptions); }, csv: function (x) { return x.subscriptions; } },
+      { t: 'کاربر', n: true, f: function (x) { return fmt(x.users); }, csv: function (x) { return x.users; } },
+      { t: 'ثبت‌نام در بازه', n: true, f: function (x) { return fmt(x.newSubscriptions); }, csv: function (x) { return x.newSubscriptions; } },
+      { t: 'فعال در بازه', n: true, f: function (x) { return fmt(x.activeUsers); }, csv: function (x) { return x.activeUsers; } },
+      { t: 'کارکرد', n: true, f: function (x) { return fmt(x.karkard); }, csv: function (x) { return x.karkard; } },
+      { t: 'جایزه', n: true, f: function (x) { return fmt(x.redemptions); }, csv: function (x) { return x.redemptions; } },
+      { t: 'موجودی امتیاز', n: true, f: function (x) { return fmt(x.tokenBalance); }, csv: function (x) { return x.tokenBalance; } },
+    ];
+    grid.appendChild(card('شهرها', f.city ? 'فقط شهر انتخاب‌شده' : 'برای فیلتر روی شهر بزنید', [table(cityCols, cities, {
+      onRow: function (x) { if (x.id !== null) { $('city').value = String(x.id); load(false); } },
+    })], { actions: [csvButton(file + '-cities', cityCols, cities)] }));
+
+    // ماموریت‌ها و پیام‌ها
+    var en = r.engagement;
+    var hintCols = [
+      { t: 'ماموریت', f: function (x) { return x.text; } },
+      { t: 'امتیاز', n: true, f: function (x) { return fmt(x.token); }, csv: function (x) { return x.token; } },
+      { t: 'دیده‌شده در بازه', n: true, f: function (x) { return fmt(x.seenInRange); }, csv: function (x) { return x.seenInRange; } },
+      { t: 'کل', n: true, f: function (x) { return fmt(x.seenTotal); }, csv: function (x) { return x.seenTotal; } },
+    ];
+    grid.appendChild(card('ماموریت‌های روزانه', null, [table(hintCols, en.hints)], { half: true, actions: [csvButton(file + '-hints', hintCols, en.hints)] }));
+    var msgCols = [
+      { t: 'عنوان', f: function (x) { return x.title; } },
+      { t: 'نوع', f: function (x) { return x.type; } },
+      { t: 'امتیاز', n: true, f: function (x) { return fmt(x.token); }, csv: function (x) { return x.token; } },
+      { t: 'تاریخ', f: function (x) { return dateLabel(x.created); }, csv: function (x) { return x.created; } },
+      { t: 'امتیاز گرفته در بازه', n: true, f: function (x) { return fmt(x.claimsInRange); }, csv: function (x) { return x.claimsInRange; } },
+      { t: 'کل', n: true, f: function (x) { return fmt(x.claimsTotal); }, csv: function (x) { return x.claimsTotal; } },
+    ];
+    grid.appendChild(card('پیام‌ها و آموزش‌های عمومی', fmt(en.personalMessages) + ' پیام اختصاصی (' + fmt(en.personalMessagesInRange) + ' در بازه)', [table(msgCols, en.messages)], { half: true, actions: [csvButton(file + '-messages', msgCols, en.messages)] }));
+
+    var leaderCols = [
+      { t: 'اشتراک', f: function (x) { return ltr(x.keyNo); }, csv: function (x) { return x.keyNo; } },
+      { t: 'موبایل', f: function (x) { return ltr(x.mobile); }, csv: function (x) { return x.mobile; } },
+      { t: 'شهر', f: function (x) { return x.city || '—'; } }, { t: 'موجودی امتیاز', n: true, f: function (x) { return fmt(x.token); }, csv: function (x) { return x.token; } },
+    ];
+    grid.appendChild(card('بیشترین امتیاز', 'موجودی فعلی', [table(leaderCols, en.leaders)], { half: true }));
+    var refCols = [
+      { t: 'اشتراک', f: function (x) { return ltr(x.keyNo); }, csv: function (x) { return x.keyNo; } },
+      { t: 'موبایل', f: function (x) { return ltr(x.mobile); }, csv: function (x) { return x.mobile; } },
+      { t: 'شهر', f: function (x) { return x.city || '—'; } }, { t: 'دعوت موفق', n: true, f: function (x) { return fmt(x.invites); }, csv: function (x) { return x.invites; } },
+    ];
+    grid.appendChild(card('برترین معرف‌ها', 'داخل بازه', [en.referrers.length ? table(refCols, en.referrers) : el('div', { class: 'dim', text: 'در این بازه دعوتی ثبت نشده است.' })], { half: true }));
+
+    // فرم ممیزی
+    var dc = r.declarations;
+    grid.appendChild(card('فرم ممیزی انرژی ساختمان', fmt(dc.total) + ' فرم · کل دوره (فرم تاریخ ثبت ندارد) · فیلتر شهر روی آن اثری ندارد', [
+      el('div', { class: 'decl' }, dc.fields.filter(function (x) { return x.answered; }).map(function (x) {
+        return el('div', {}, [el('h3', {}, [x.label + ' ', el('small', { text: fmt(x.answered) + ' پاسخ' })]),
+          hbars(x.values.map(function (v) { return { label: v.value, value: v.count }; }), x.answered)]);
+      })),
+      dc.scanned < dc.total ? el('div', { class: 'note', text: 'فقط ' + fmt(dc.scanned) + ' فرم اول بررسی شده است.' }) : null,
+    ]));
+
+    content.appendChild(grid);
+  }
+
+  // ------------------------------------------------------------ start
+  function showLogin() { $('app').hidden = true; $('login').hidden = false; $('password').focus(); }
+  function showApp() {
+    $('login').hidden = true; $('app').hidden = false;
+    api('provinces').then(function (d) {
+      state.provinces = d.provinces;
+      var select = $('province');
+      select.textContent = '';
+      select.appendChild(el('option', { value: '', text: 'همه استان‌ها (مقایسه)' }));
+      d.provinces.forEach(function (p) { select.appendChild(el('option', { value: p.key, text: p.name + (p.connected ? '' : ' (متصل نیست)'), disabled: !p.connected })); });
+      var h = readHash();
+      select.value = d.provinces.some(function (p) { return p.key === h.province && p.connected; }) ? h.province : '';
+      $('to').value = h.to || daysAgo(0);
+      $('from').value = h.from || daysAgo(29);
+      fillCities(select.value);
+      if (h.city && select.value) {
+        $('city').appendChild(el('option', { value: h.city, text: 'شهر ' + faDigits(h.city) }));
+        $('city').value = h.city;
+        $('city').disabled = false;
+      }
+      load(false);
+    }, function (err) { if (err.loginRequired) showLogin(); else setStatus([statusBadge('critical', err.message)]); });
+  }
+
+  $('loginForm').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var btn = ev.target.querySelector('button');
+    btn.disabled = true; $('loginError').textContent = '';
+    api('login', null, { password: $('password').value }).then(function () { $('password').value = ''; showApp(); }, function (err) {
+      $('loginError').textContent = err.message;
+    }).then(function () { btn.disabled = false; });
+  });
+  $('logout').addEventListener('click', function () { api('logout', null, {}).catch(function () {}).then(showLogin); });
+  $('apply').addEventListener('click', function () { load(false); });
+  $('refresh').addEventListener('click', function () { load(true); });
+  $('province').addEventListener('change', function () { $('city').value = ''; fillCities($('province').value); load(false); });
+  $('city').addEventListener('change', function () { load(false); });
+  ['from', 'to'].forEach(function (id) { $(id).addEventListener('keydown', function (ev) { if (ev.key === 'Enter') load(false); }); });
+  Array.prototype.forEach.call(document.querySelectorAll('#presets .chip'), function (b) {
+    b.addEventListener('click', function () {
+      var to = daysAgo(0);
+      $('to').value = to;
+      $('from').value = b.dataset.days === 'year' ? to.slice(0, 4) + '-01-01' : daysAgo(Number(b.dataset.days) - 1);
+      load(false);
+    });
+  });
+  window.addEventListener('scroll', hideTip, { passive: true });
+
+  api('session').then(function (d) {
+    if (d.loggedIn) return showApp();
+    showLogin();
+    if (!d.configured) $('loginError').textContent = 'رمز پنل روی سرور تنظیم نشده است.';
+  }, function (err) { showLogin(); $('loginError').textContent = err.message; });
+})();
+</script>
+</body>
+</html>

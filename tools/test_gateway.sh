@@ -10,10 +10,28 @@ trap cleanup EXIT
 
 mkdir -p "$WORK/site" "$WORK/upstream" "$WORK/tmp"
 cp -r "$REPO/src/api" "$WORK/site/api"
-sed -i "s#'https://es.nigc-kerman.ir'#'http://127.0.0.1:$UP'#" "$WORK/site/api/config.php"
+# kerman = fake Daftar; fars = fake old Daftar without ws-optimize/report; no other province is reachable
+sed -i "s#'https://es.nigc-kerman.ir'#'http://127.0.0.1:$UP'#; s#'https://dpd.farsgas.ir'#'http://127.0.0.1:$UP/old'#" "$WORK/site/api/config.php"
+sed -i -E "s#'upstream' => 'https://[^']*'#'upstream' => null#" "$WORK/site/api/config.php"
+cat > "$WORK/site/api/report.local.php" <<'PHP'
+<?php
+return ['password' => 'test-pass', 'daftar_token' => 'daftar-secret'];
+PHP
 cat > "$WORK/upstream/index.php" <<'PHP'
 <?php
 header('Content-Type: application/json');
+$uri = $_SERVER['REQUEST_URI'];
+if (preg_match('#/ws-optimize/(report|export-data)#', $uri, $m)) {
+    if (strpos($uri, '/old/') === 0 && $m[1] === 'report') {
+        http_response_code(404);
+        exit('{"status":404}');
+    }
+    if (($_SERVER['HTTP_X_TOKEN'] ?? '') !== 'daftar-secret') {
+        http_response_code(401);
+        exit('{"success":false}');
+    }
+    exit(json_encode(['success' => true, 'uri' => $uri, 'total_records' => '7', 'extra_stats' => ['total_tokens_system' => '70']]));
+}
 echo json_encode([
     'uri' => $_SERVER['REQUEST_URI'], 'method' => $_SERVER['REQUEST_METHOD'],
     'auth' => $_SERVER['HTTP_AUTHORIZATION'] ?? null, 'body' => file_get_contents('php://input'),
@@ -58,7 +76,25 @@ done
 expect "send-otp #6 same mobile is rate limited" 429 'تعداد درخواست' "${K[@]}" -X POST --data '{"mobNo":"0912 000 0000"}' "$API/ws-optimize/send-otp"
 expect "other mobile is not limited" 200 - "${K[@]}" -X POST --data '{"mobNo":"09129999999"}' "$API/ws-optimize/send-otp"
 
-if grep -qE 'Bearer t|09120000000|"a":1' "$WORK/gateway.log"; then
+# report panel (src/api/report.php)
+R="$API/report"
+RH=(-H "X-Gas24-Report: 1" -b "$WORK/jar" -c "$WORK/jar")
+expect "report: custom header is required" 403 - "$R?op=session"
+expect "report: session before login" 200 '"loggedIn":false' "${RH[@]}" "$R?op=session"
+expect "report: data needs login" 401 'loginRequired' "${RH[@]}" "$R?op=provinces"
+expect "report: wrong password" 401 - "${RH[@]}" -X POST --data '{"password":"nope"}' "$R?op=login"
+expect "report: foreign Origin is rejected" 403 - "${RH[@]}" -H "Origin: https://evil.example" -X POST --data '{"password":"test-pass"}' "$R?op=login"
+expect "report: login" 200 '"loggedIn":true' "${RH[@]}" -X POST --data '{"password":"test-pass"}' "$R?op=login"
+expect "report: province list" 200 '"key":"kerman"' "${RH[@]}" "$R?op=provinces"
+expect "report: full report via X-Token" 200 'ws-optimize/report?from=1405-07-01&to=1405-07-09' "${RH[@]}" "$R?op=report&province=kerman&from=1405-07-01&to=1405-07-09"
+expect "report: old Daftar falls back to export-data" 200 '"mode":"basic"' "${RH[@]}" "$R?op=report&province=fars"
+expect "report: bad date" 400 - "${RH[@]}" "$R?op=report&province=kerman&from=x"
+expect "report: unconnected province" 503 'قم' "${RH[@]}" "$R?op=report&province=qom"
+expect "report: compare all provinces" 200 '"mode":"basic"' "${RH[@]}" "$R?op=compare&from=1405-07-01&to=1405-07-09"
+expect "report: logout" 200 - "${RH[@]}" -X POST --data '{}' "$R?op=logout"
+expect "report: logged out" 401 - "${RH[@]}" "$R?op=provinces"
+
+if grep -qE 'Bearer t|09120000000|"a":1|daftar-secret|test-pass' "$WORK/gateway.log"; then
   echo "FAIL gateway log contains request secrets or bodies"; fail=1
 else
   echo "ok   gateway log has no bodies, tokens or mobile numbers"
