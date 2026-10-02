@@ -260,6 +260,9 @@ tfoot td { font-weight: 700; border-top: 1px solid var(--axis); border-bottom: 0
     if (Math.abs(n) >= 1e6) return (Math.round(n / 1e5) / 10).toLocaleString('fa-IR') + ' میلیون';
     return n.toLocaleString('fa-IR');
   }
+  // میانگین اشتراک برای هر موبایل یکتا، با دو رقم اعشار
+  function perMobileRaw(subs, users) { return subs && users ? Math.round(100 * subs / users) / 100 : ''; }
+  function perMobile(subs, users) { var v = perMobileRaw(subs, users); return v === '' ? '—' : v.toLocaleString('fa-IR'); }
   function pct(part, whole) { return whole ? (Math.round(1000 * part / whole) / 10).toLocaleString('fa-IR') + '٪' : '—'; }
   var MONTHS = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
   // 1405-07-09 → ۱۴۰۵/۰۷/۰۹ ؛ سطل ماهانه 1405-07 → مهر ۱۴۰۵
@@ -616,7 +619,8 @@ tfoot td { font-weight: 700; border-top: 1px solid var(--axis); border-bottom: 0
       { t: 'استان', f: function (r) { return r.name; } },
       { t: 'وضعیت', f: modeCell, csv: function (r) { return r.mode; } },
       { t: 'اشتراک', n: true, f: num('subscriptions'), csv: function (r) { return val(r, 'subscriptions'); } },
-      { t: 'کاربر', n: true, f: num('users'), csv: function (r) { return val(r, 'users'); } },
+      { t: 'موبایل یکتا', n: true, f: num('users'), csv: function (r) { return val(r, 'users'); } },
+      { t: 'اشتراک برای هر موبایل', n: true, f: function (r) { return perMobile(val(r, 'subscriptions'), val(r, 'users')); }, csv: function (r) { return perMobileRaw(val(r, 'subscriptions'), val(r, 'users')); } },
       { t: 'ثبت‌نام در بازه', n: true, f: num('newSubscriptions'), csv: function (r) { return val(r, 'newSubscriptions'); } },
       { t: 'فعال در بازه', n: true, f: num('activeUsers'), csv: function (r) { return val(r, 'activeUsers'); } },
       { t: 'امتیاز داده‌شده', n: true, f: num('tokensEarned'), csv: function (r) { return val(r, 'tokensEarned'); } },
@@ -625,7 +629,7 @@ tfoot td { font-weight: 700; border-top: 1px solid var(--axis); border-bottom: 0
       { t: 'آخرین فعالیت', f: function (r) { return r.health && r.health.lastToken.date ? dateLabel(r.health.lastToken.date) : (r.error || '—'); } },
     ];
     var sum = function (key) { return rows.reduce(function (a, r) { var v = val(r, key); return a + (Number(v) || 0); }, 0); };
-    var foot = ['جمع', '', fmt(sum('subscriptions')), fmt(sum('users')), fmt(sum('newSubscriptions')), fmt(sum('activeUsers')), fmt(sum('tokensEarned')), fmt(sum('redemptions')), fmt(sum('karkard')), ''];
+    var foot = ['جمع', '', fmt(sum('subscriptions')), fmt(sum('users')), perMobile(sum('subscriptions'), sum('users')), fmt(sum('newSubscriptions')), fmt(sum('activeUsers')), fmt(sum('tokensEarned')), fmt(sum('redemptions')), fmt(sum('karkard')), ''];
     var open = function (r) { if (r.mode === 'full' || r.mode === 'basic') { $('province').value = r.key; fillCities(r.key); load(false); } };
 
     var grid = el('div', { class: 'grid' });
@@ -679,7 +683,8 @@ tfoot td { font-weight: 700; border-top: 1px solid var(--axis); border-bottom: 0
 
     var o = r.overview, grid = el('div', { class: 'grid' });
     grid.appendChild(el('div', { class: 'tiles', style: 'grid-column: span 12' }, [
-      tile('اشتراک‌ها', fmt(o.subscriptions), fmt(o.users) + ' کاربر (موبایل)'),
+      tile('اشتراک‌ها', fmt(o.subscriptions), 'در دست ' + fmt(o.users) + ' موبایل یکتا'),
+      tile('موبایل یکتا', fmt(o.users), 'میانگین ' + perMobile(o.subscriptions, o.users) + ' اشتراک برای هر موبایل'),
       tile('ثبت‌نام در بازه', fmt(o.newSubscriptions), fmt(o.newUsers) + ' کاربر تازه'),
       tile('کاربران فعال در بازه', fmt(o.activeUsers), pct(o.activeUsers, o.subscriptions) + ' از اشتراک‌ها'),
       tile('فعال ۷ روز اخیر', fmt(o.active7), 'فعال ۳۰ روز: ' + fmt(o.active30)),
@@ -730,6 +735,16 @@ tfoot td { font-weight: 700; border-top: 1px solid var(--axis); border-bottom: 0
       hbars(fu.map(function (x) { return { label: x.label, value: x.count }; }), reg),
     ], { half: true }));
 
+    // چند اشتراک برای هر موبایل (دفتر ۳.۶.۵۹ به بعد)
+    if (o.subscriptionsPerMobile) {
+      var PER_LABELS = { '1': 'یک اشتراک', '2': 'دو اشتراک', '3': 'سه اشتراک', '4-5': '۴ تا ۵ اشتراک', '6+': '۶ اشتراک یا بیشتر' };
+      grid.appendChild(card('اشتراک به ازای هر موبایل', fmt(o.users) + ' موبایل یکتا برای ' + fmt(o.subscriptions) + ' اشتراک · کل دوره', [
+        hbars(o.subscriptionsPerMobile.map(function (x) { return { label: PER_LABELS[x.subscriptions] || x.subscriptions, value: x.mobiles }; }), o.users),
+        el('div', { class: 'note', text: fmt(o.multiSubscriptionMobiles) + ' موبایل بیش از یک اشتراک دارند و روی هم ' + fmt(o.multiMobileSubscriptions)
+          + ' اشتراک را ثبت کرده‌اند؛ بیشترین: ' + fmt(o.maxSubscriptionsPerMobile) + ' اشتراک برای یک موبایل. فهرستشان در «جزئیات ← موبایل‌ها».' }),
+      ], { half: true, actions: [el('button', { type: 'button', class: 'mini', text: 'دیدن موبایل‌ها', onclick: function () { if (state.openDetail) state.openDetail('mobiles'); } })] }));
+    }
+
     // جوایز
     var rw = r.rewards;
     var rewardCols = [
@@ -777,7 +792,7 @@ tfoot td { font-weight: 700; border-top: 1px solid var(--axis); border-bottom: 0
     var cityCols = [
       { t: 'شهر', f: function (x) { return x.name; } },
       { t: 'اشتراک', n: true, f: function (x) { return fmt(x.subscriptions); }, csv: function (x) { return x.subscriptions; } },
-      { t: 'کاربر', n: true, f: function (x) { return fmt(x.users); }, csv: function (x) { return x.users; } },
+      { t: 'موبایل یکتا', n: true, f: function (x) { return fmt(x.users); }, csv: function (x) { return x.users; } },
       { t: 'ثبت‌نام در بازه', n: true, f: function (x) { return fmt(x.newSubscriptions); }, csv: function (x) { return x.newSubscriptions; } },
       { t: 'فعال در بازه', n: true, f: function (x) { return fmt(x.activeUsers); }, csv: function (x) { return x.activeUsers; } },
       { t: 'کارکرد', n: true, f: function (x) { return fmt(x.karkard); }, csv: function (x) { return x.karkard; } },
@@ -918,6 +933,7 @@ tfoot td { font-weight: 700; border-top: 1px solid var(--axis); border-bottom: 0
       cols: function () { return [
         { t: 'شماره اشتراک', f: function (r) { return ltr(r.keyNo); }, csv: function (r) { return r.keyNo; } },
         { t: 'موبایل', f: function (r) { return ltr(r.mobile); }, csv: function (r) { return r.mobile; } },
+        { t: 'اشتراک‌های این موبایل', n: true, f: function (r) { return r.mobileSubscriptions > 1 ? el('b', { text: faDigits(r.mobileSubscriptions) }) : fmt(r.mobileSubscriptions); }, csv: function (r) { return r.mobileSubscriptions; } },
         { t: 'نام مالک', f: function (r) { return r.name || '—'; } },
         { t: 'مالک؟', f: ownerBadge, csv: function (r) { return r.ownerMobile === true ? 'مالک' : r.ownerMobile === false ? 'غیر از مالک' : ''; } },
         { t: 'شهر', f: function (r) { return r.city || '—'; } },
@@ -925,6 +941,16 @@ tfoot td { font-weight: 700; border-top: 1px solid var(--axis); border-bottom: 0
         { t: 'تاریخ ثبت', f: function (r) { return dateLabel(r.registered); }, csv: function (r) { return r.registered; } },
         { t: 'موجودی امتیاز', n: true, f: function (r) { return fmt(r.token); }, csv: function (r) { return r.token; } },
         { t: 'کد معرف', f: function (r) { return ltr(r.refCode); }, csv: function (r) { return r.refCode; } },
+      ]; } },
+    { kind: 'mobiles', label: 'موبایل‌ها', sub: 'هر موبایل یک ردیف با همه اشتراک‌هایش؛ بیشترین اشتراک اول. کل دوره است و بازه تاریخ اثری ندارد؛ فیلتر شهر اثر دارد. جستجوی شماره اشتراک، موبایل صاحبش را نشان می‌دهد.',
+      cols: function () { return [
+        { t: 'موبایل', f: function (r) { return ltr(r.mobile); }, csv: function (r) { return r.mobile; } },
+        { t: 'تعداد اشتراک', n: true, f: function (r) { return r.subscriptions > 1 ? el('b', { text: faDigits(r.subscriptions) }) : fmt(r.subscriptions); }, csv: function (r) { return r.subscriptions; } },
+        { t: 'شماره اشتراک‌ها', f: function (r) { return el('bdi', { dir: 'ltr', text: r.keyNos.join('، ') || '—' }); }, csv: function (r) { return r.keyNos.join(' '); } },
+        { t: 'شهر', f: function (r) { return r.cities.join('، ') || '—'; }, csv: function (r) { return r.cities.join('، '); } },
+        { t: 'اولین ثبت', f: function (r) { return dateLabel(r.firstRegistered); }, csv: function (r) { return r.firstRegistered; } },
+        { t: 'آخرین ثبت', f: function (r) { return dateLabel(r.lastRegistered); }, csv: function (r) { return r.lastRegistered; } },
+        { t: 'جمع امتیاز', n: true, f: function (r) { return fmt(r.tokens); }, csv: function (r) { return r.tokens; } },
       ]; } },
     { kind: 'karkard', label: 'اعلام کارکرد', sub: 'کارکردهای ثبت‌شده داخل بازه؛ برای دیدن عکس کنتور روی «تصویر» بزنید.',
       cols: function (provinceKey) { return [
@@ -1028,7 +1054,9 @@ tfoot td { font-weight: 700; border-top: 1px solid var(--axis); border-bottom: 0
       }, function (err) { alert(err.message); }).then(function () { exportBtn.disabled = false; exportBtn.textContent = 'دریافت CSV همه'; });
     });
     fetchPage();
-    return card('جزئیات', 'ردیف‌به‌ردیف، با شماره اشتراک و موبایل کامل', [el('div', { class: 'dtools' }, [chips, search]), sub, body, pager], { actions: [exportBtn] });
+    var section;
+    state.openDetail = function (kind) { st.kind = kind; st.page = 1; fetchPage(); section.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+    return section = card('جزئیات', 'ردیف‌به‌ردیف، با شماره اشتراک و موبایل کامل', [el('div', { class: 'dtools' }, [chips, search]), sub, body, pager], { actions: [exportBtn] });
   }
 
   // ------------------------------------------------------------ start

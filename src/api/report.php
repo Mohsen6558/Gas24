@@ -306,9 +306,9 @@ if ($op === 'report') {
     reportRespond($info + ['mode' => 'basic', 'cached' => $basic['cached'], 'data' => $basic['basic']]);
 }
 
-// جزئیات ردیف‌به‌ردیف (ws-optimize/report-detail دفتر): اشتراک‌ها، کارکردها، جوایز داده‌شده و فرم‌های ممیزی.
+// جزئیات ردیف‌به‌ردیف (ws-optimize/report-detail دفتر): اشتراک‌ها، موبایل‌ها، کارکردها، جوایز داده‌شده و فرم‌های ممیزی.
 // export=1 همه ردیف‌ها را (حداکثر REPORT_DETAIL_EXPORT_MAX) برای خروجی CSV یک‌جا برمی‌گرداند.
-const REPORT_DETAIL_KINDS = ['subscriptions', 'karkard', 'rewards', 'declarations'];
+const REPORT_DETAIL_KINDS = ['subscriptions', 'mobiles', 'karkard', 'rewards', 'declarations'];
 const REPORT_DETAIL_EXPORT_MAX = 10000;
 
 function reportDetailProvince(array $config): array
