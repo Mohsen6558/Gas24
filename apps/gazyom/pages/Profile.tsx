@@ -7,6 +7,10 @@ import { Subscription } from '../types';
 import { toPersianDigits } from '../services/geminiService';
 import { clearGazyomAuthToken, fetchGetProfile } from '../services/wsOptimizeApi';
 import { keepBannerViewsAcross } from '../services/promoBanner';
+import { loadReferralStats } from '../services/activity';
+
+// What Daftar credits the inviter for each friend who joins with their code (check-otp, type 5).
+const REFERRAL_REWARD = 50;
 import AddSubscriptionFlow from '../components/AddSubscriptionFlow';
 
 interface ProfileProps {
@@ -43,6 +47,7 @@ const Profile: React.FC<ProfileProps> = ({
   const [profileRewardsCount, setProfileRewardsCount] = useState(0);
   const [profileReferCode, setProfileReferCode] = useState('');
   const [profileLoading, setProfileLoading] = useState(true);
+  const [referrals, setReferrals] = useState<{ count: number; tokens: number } | null>(null);
 
   const activeSub = subscriptions[activeSubIndex];
 
@@ -75,6 +80,17 @@ const Profile: React.FC<ProfileProps> = ({
       });
     return () => ac.abort();
   }, [wsBaseUrl, activeSub?.number, activeSubIndex]);
+
+  // the referral reward lands on one of the user's subscriptions, so all of them are counted
+  const subNumbers = subscriptions.map((s) => s.number).join(',');
+  useEffect(() => {
+    if (!wsBaseUrl || !subNumbers) return;
+    let alive = true;
+    loadReferralStats(wsBaseUrl, subNumbers.split(',')).then((r) => alive && setReferrals(r));
+    return () => {
+      alive = false;
+    };
+  }, [wsBaseUrl, subNumbers]);
 
   const handleLogout = () => {
     clearGazyomAuthToken();
@@ -223,7 +239,7 @@ const Profile: React.FC<ProfileProps> = ({
                 <div className="relative z-10 space-y-4 md:space-y-6 text-right">
                   <div className="space-y-1">
                     <h3 className="text-base md:text-xl font-black flex items-center gap-2 md:gap-3"><Share2 size={18} md:size={24} /> دعوت از دوستان</h3>
-                    <p className="text-[10px] md:text-sm opacity-70 font-bold">{toPersianDigits(100)} گازیوم هدیه برای هر دعوت</p>
+                    <p className="text-[10px] md:text-sm opacity-70 font-bold">{toPersianDigits(REFERRAL_REWARD)} گازیوم هدیه برای هر دوستی که با کد شما عضو شود</p>
                   </div>
                   <div className="bg-white/10 backdrop-blur-md rounded-xl md:rounded-2xl p-3 md:p-4 flex justify-between items-center border border-white/20 gap-2">
                     <span className="text-lg md:text-2xl font-black tracking-widest break-all text-left dir-ltr">
@@ -263,6 +279,18 @@ const Profile: React.FC<ProfileProps> = ({
                     <p className="text-[10px] md:text-xs font-bold bg-white/10 rounded-lg p-2 break-all select-all dir-ltr text-left">
                       {inviteLink}
                     </p>
+                  )}
+                  {referrals && (
+                    <div className="grid grid-cols-2 gap-2 md:gap-3">
+                      <div className="bg-white/10 rounded-xl md:rounded-2xl p-3 border border-white/10">
+                        <p className="text-[9px] md:text-[11px] font-bold opacity-70">دوستانی که عضو شدند</p>
+                        <p className="text-lg md:text-2xl font-black">{toPersianDigits(referrals.count)} <span className="text-[10px] md:text-xs font-bold opacity-70">نفر</span></p>
+                      </div>
+                      <div className="bg-white/10 rounded-xl md:rounded-2xl p-3 border border-white/10">
+                        <p className="text-[9px] md:text-[11px] font-bold opacity-70">گازیوم از دعوت‌ها</p>
+                        <p className="text-lg md:text-2xl font-black">{toPersianDigits(referrals.tokens.toLocaleString('en-US'))}</p>
+                      </div>
+                    </div>
                   )}
                 </div>
               </div>

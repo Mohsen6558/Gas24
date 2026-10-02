@@ -2,7 +2,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { UserLevel, Subscription, type ConsumptionData, type Reward } from '../types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { TrendingDown, ChevronLeft, Zap, CloudSun, Trophy, ChevronDown, Check, Plus, Circle, CheckCircle2, Loader2, ClipboardList } from 'lucide-react';
+import { TrendingDown, ChevronLeft, Zap, CloudSun, Trophy, ChevronDown, Check, Plus, Circle, CheckCircle2, Loader2, ClipboardList, Bell } from 'lucide-react';
+import TodayTasks from '../components/TodayTasks';
+import { loadInbox, subscribeInboxRead, unreadCount } from '../services/inbox';
 import { buildDeclarationFormLink } from '../services/shareLinks';
 import { SectionLoader } from '../components/SectionLoader';
 import { getWeatherAdvice, toPersianDigits } from '../services/geminiService';
@@ -25,11 +27,13 @@ import {
 import {
   chartConsumptionDayRead,
   chartConsumptionDayWrite,
+  chartYearsDayWrite,
   rewardsListHourRead,
   rewardsListHourWrite,
 } from '../services/dataRefreshCache';
 import { orderChartRowsByJalali } from '../services/chartConsumptionSeasons';
 import { REWARD_PLACEHOLDER, fallbackTo } from '../services/media';
+import { RewardProgress, RewardStockBadge } from '../components/RewardProgress';
 
 interface Mission {
   id: number;
@@ -49,6 +53,9 @@ interface DashboardProps {
   onSeeAllRewards?: () => void;
   
   onTotalTokenFromProfile?: (total: number) => void;
+  onSelfDeclareClick: () => void;
+  onWheelClick: () => void;
+  onInboxClick: () => void;
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ 
@@ -61,6 +68,9 @@ const Dashboard: React.FC<DashboardProps> = ({
   onAddSub,
   onSeeAllRewards,
   onTotalTokenFromProfile,
+  onSelfDeclareClick,
+  onWheelClick,
+  onInboxClick,
 }) => {
   
   const [serverGazyom, setServerGazyom] = useState<number | null>(null);
@@ -88,9 +98,26 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [profileMobile, setProfileMobile] = useState('');
   const [profileCity, setProfileCity] = useState('');
 
+  const [unread, setUnread] = useState(0);
+
   useEffect(() => {
     getWeatherAdvice().then(setWeatherData);
   }, []);
+
+  useEffect(() => {
+    if (!wsBaseUrl || !activeSub?.number) return;
+    let alive = true;
+    const keyNoStr = String(activeSub.number);
+    const count = () =>
+      loadInbox(wsBaseUrl, keyNoStr).then((res) => alive && setUnread(res.ok ? unreadCount(res.items, keyNoStr) : 0));
+    setUnread(0);
+    count();
+    const off = subscribeInboxRead(count);
+    return () => {
+      alive = false;
+      off();
+    };
+  }, [wsBaseUrl, activeSub.number]);
 
   
   useEffect(() => {
@@ -206,6 +233,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           return;
         }
         chartConsumptionDayWrite(wsBaseUrl, keyNoStr, res.items);
+        chartYearsDayWrite(wsBaseUrl, keyNoStr, res.years);
         setChartRows(res.items);
       })
       .catch(() => {
@@ -345,6 +373,20 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         
+        <div className="flex items-center gap-2 md:gap-3 shrink-0">
+        <button
+          type="button"
+          onClick={onInboxClick}
+          aria-label={unread > 0 ? `پیام‌های من، ${toPersianDigits(unread)} پیام خوانده‌نشده` : 'پیام‌های من'}
+          className="relative bg-white p-3 md:p-4 rounded-2xl border border-slate-200 shadow-sm text-slate-600 active:scale-95 transition-all"
+        >
+          <Bell size={20} />
+          {unread > 0 && (
+            <span className="absolute -top-1.5 -left-1.5 min-w-[1.25rem] h-5 px-1 rounded-full bg-red-500 text-white text-[10px] font-black flex items-center justify-center border-2 border-white">
+              {toPersianDigits(unread > 9 ? '9+' : unread)}
+            </span>
+          )}
+        </button>
         <button onClick={onLeaderboardClick} className="bg-gradient-to-br from-yellow-400 to-orange-500 p-0.5 rounded-2xl shadow-xl shadow-orange-100 active:scale-95 transition-all group shrink-0">
           <div className="bg-white/10 backdrop-blur-md px-3 py-2 md:px-6 md:py-4 rounded-[14px] flex items-center gap-2 md:gap-4 border border-white/20">
             <div className="flex flex-col items-start">
@@ -363,6 +405,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             </div>
           </div>
         </button>
+        </div>
       </div>
 
       <a
@@ -382,6 +425,16 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
         <ChevronLeft size={20} className="shrink-0" />
       </a>
+
+      <TodayTasks
+        wsBaseUrl={wsBaseUrl}
+        keyNo={String(activeSub.number)}
+        missionsDone={completedCount}
+        missionsTotal={missions.length}
+        onKarkard={onSelfDeclareClick}
+        onWheel={onWheelClick}
+        onMissions={() => document.getElementById('daily-missions')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
@@ -483,7 +536,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           
-          <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 space-y-6 order-4">
+          <div id="daily-missions" className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 space-y-6 order-4 scroll-mt-6">
             <div className="flex justify-between items-center">
               <h3 className="font-black text-base md:text-lg text-slate-800">ماموریت‌های روزانه</h3>
               <div className="bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-full text-[10px] font-black">
@@ -586,16 +639,22 @@ const Dashboard: React.FC<DashboardProps> = ({
                       src={reward.image}
                       alt=""
                       onError={fallbackTo(REWARD_PLACEHOLDER)}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                      className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ${reward.stock === 0 ? 'grayscale opacity-70' : ''}`}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                    <RewardStockBadge stock={reward.stock} className="absolute top-4 right-4" />
                     <div className="absolute bottom-4 right-4 flex flex-col items-end gap-0.5 bg-white/20 backdrop-blur-md border border-white/30 px-3 py-1.5 rounded-xl text-white text-[10px] font-black">
                       <span>{toPersianDigits(String(reward.requiredGazyom))}</span>
                       <span className="text-[8px] font-bold text-white/85">امتیاز مورد نیاز</span>
                     </div>
                   </div>
                   <div className="p-5 flex justify-between items-center gap-2">
-                    <h4 className="text-xs font-black text-slate-800 line-clamp-2">{reward.title}</h4>
+                    <div className="min-w-0 flex-1 space-y-2.5">
+                      <h4 className="text-xs font-black text-slate-800 line-clamp-2">{reward.title}</h4>
+                      {reward.stock !== 0 && (
+                        <RewardProgress balance={profileLoading ? null : displayGazyom} required={reward.requiredGazyom} />
+                      )}
+                    </div>
                     <ChevronLeft size={16} className="text-slate-300 group-hover:text-orange-500 shrink-0" />
                   </div>
                 </div>

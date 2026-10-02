@@ -4,7 +4,8 @@ import { ChevronLeft, Sparkles, Tag, Disc, History, Gift, Trophy } from 'lucide-
 import { SectionLoader } from '../components/SectionLoader';
 import { Reward } from '../types';
 import { toPersianDigits } from '../services/geminiService';
-import { fetchRewardList } from '../services/wsOptimizeApi';
+import { fetchGetProfile, fetchRewardList } from '../services/wsOptimizeApi';
+import { RewardProgress, RewardStockBadge } from '../components/RewardProgress';
 import { rewardsListHourRead, rewardsListHourWrite } from '../services/dataRefreshCache';
 import { REWARD_PLACEHOLDER, fallbackTo } from '../services/media';
 
@@ -55,6 +56,22 @@ const Rewards: React.FC<RewardsProps> = ({
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState('');
+  // gazyom balance, for «N گازیوم دیگر تا این جایزه» on each card
+  const [balance, setBalance] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!wsBaseUrl || !keyNo) return;
+    const ac = new AbortController();
+    setBalance(null);
+    fetchGetProfile(wsBaseUrl, { keyNo }, { signal: ac.signal })
+      .then((res) => {
+        if (res.ok === false) return;
+        const row = res.rows.find((r) => String(r.key_no) === String(keyNo)) ?? res.rows[0];
+        if (row && typeof row.total_token === 'number') setBalance(row.total_token);
+      })
+      .catch(() => {});
+    return () => ac.abort();
+  }, [wsBaseUrl, keyNo]);
 
   useEffect(() => {
     if (!wsBaseUrl || !keyNo) return;
@@ -190,14 +207,18 @@ const Rewards: React.FC<RewardsProps> = ({
           filteredRewards.map((reward) => (
           <div key={reward.id} onClick={() => onRewardClick(reward)} className="group bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-50 hover:shadow-2xl transition-all cursor-pointer flex flex-col">
             <div className="relative h-48 md:h-60 overflow-hidden">
-              <img src={reward.image} alt="" onError={fallbackTo(REWARD_PLACEHOLDER)} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+              <img src={reward.image} alt="" onError={fallbackTo(REWARD_PLACEHOLDER)} className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 ${reward.stock === 0 ? 'grayscale opacity-70' : ''}`} />
+              <RewardStockBadge stock={reward.stock} className="absolute top-4 right-4" />
               <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-3 md:px-4 py-1.5 md:py-2 rounded-xl shadow-lg border border-white/50 flex flex-col items-center">
                 <span className="text-xs md:text-sm font-black text-orange-600">{toPersianDigits(reward.requiredGazyom.toLocaleString())}</span>
                 <span className="text-[8px] md:text-[10px] font-bold text-slate-400 text-center leading-tight">امتیاز مورد نیاز</span>
               </div>
             </div>
             <div className="p-5 md:p-6 flex flex-col justify-between flex-grow gap-4">
-              <h4 className="text-sm md:text-base font-black text-slate-800 leading-tight">{reward.title}</h4>
+              <div className="space-y-3">
+                <h4 className="text-sm md:text-base font-black text-slate-800 leading-tight">{reward.title}</h4>
+                {reward.stock !== 0 && <RewardProgress balance={balance} required={reward.requiredGazyom} />}
+              </div>
               <div className="flex justify-between items-center pt-3 border-t border-slate-50">
                 <span className="text-[8px] md:text-[10px] text-slate-400 font-bold">موجود در کل کشور</span>
                 <div className="p-1.5 bg-slate-50 rounded-lg text-slate-300 group-hover:bg-orange-500 group-hover:text-white transition-colors">

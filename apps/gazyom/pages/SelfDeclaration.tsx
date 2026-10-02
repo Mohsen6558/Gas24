@@ -12,6 +12,7 @@ import {
   ImageUp,
 } from 'lucide-react';
 import { submitKarkard, toEnglishDigitsOnly } from '../services/wsOptimizeApi';
+import KarkardCalendar from '../components/KarkardCalendar';
 
 interface SelfDeclarationProps {
   wsBaseUrl: string;
@@ -261,6 +262,7 @@ const SelfDeclaration: React.FC<SelfDeclarationProps> = ({ wsBaseUrl, keyNo, onB
         {step === 'guide' && (
           <div className="animate-in fade-in duration-500 bg-white h-full flex flex-col min-h-0">
             <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-8">
+              <KarkardCalendar wsBaseUrl={wsBaseUrl} keyNo={String(keyNo)} />
               <div className="bg-blue-50 p-6 rounded-[24px] border border-blue-100 flex flex-col items-center text-center gap-4">
                  <div className="w-20 h-20 bg-blue-600 rounded-[20px] flex items-center justify-center text-white shadow-xl shadow-blue-100">
                     <Camera size={40} />

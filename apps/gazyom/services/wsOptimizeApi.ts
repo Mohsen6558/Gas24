@@ -7,6 +7,7 @@ import type {
   LeaderboardSummary,
   MyRewardClaimedItem,
   Reward,
+  TokenKind,
   Transaction,
 } from '../types';
 import { REWARD_PLACEHOLDER, normalizeImageUrl } from './media';
@@ -833,6 +834,29 @@ function normalizeChartPayloadArray(raw: unknown[]): ConsumptionData[] {
 }
 
 
+/** One Jalali year of monthly use (m³); months[0] is Farvardin. Months with no data are null. */
+export type ConsumptionYear = { year: number; months: (number | null)[] };
+
+/** Every year the server sent (it sends this year and the three before), oldest first. */
+export function normalizeChartYears(raw: unknown): ConsumptionYear[] {
+  if (raw == null || typeof raw !== 'object' || Array.isArray(raw)) return [];
+  const out: ConsumptionYear[] = [];
+  for (const [yk, monthsVal] of Object.entries(raw as Record<string, unknown>)) {
+    if (monthsVal == null || typeof monthsVal !== 'object' || Array.isArray(monthsVal)) continue;
+    const year = parseInt(toEnglishDigitsOnly(String(yk)).trim(), 10);
+    if (!Number.isFinite(year)) continue;
+    const monthObj = monthsVal as Record<string, unknown>;
+    const months: (number | null)[] = [];
+    for (let m = 1; m <= 12; m++) {
+      const mm = String(m).padStart(2, '0');
+      const present = [mm, String(m)].some((k) => monthObj[k] != null && String(monthObj[k]).trim() !== '');
+      months.push(present ? pickMonthConsumptionValue(monthObj, mm) : null);
+    }
+    out.push({ year, months });
+  }
+  return out.sort((a, b) => a.year - b.year);
+}
+
 export function normalizeChartPayload(raw: unknown): ConsumptionData[] {
   if (Array.isArray(raw)) {
     return normalizeChartPayloadArray(raw);
@@ -841,7 +865,7 @@ export function normalizeChartPayload(raw: unknown): ConsumptionData[] {
 }
 
 export type FetchConsumptionChartResult =
-  | { ok: true; items: ConsumptionData[]; count: number }
+  | { ok: true; items: ConsumptionData[]; count: number; years: ConsumptionYear[] }
   | { ok: false; message: string; type?: string };
 
 
@@ -902,8 +926,9 @@ export async function fetchConsumptionChart(
   }
 
   const items = normalizeChartPayload(body?.data ?? body?.res);
+  const years = normalizeChartYears(body?.data ?? body?.res);
   const count = typeof body?.count === 'number' ? body.count : items.length;
-  return { ok: true, items, count };
+  return { ok: true, items, count, years };
 }
 
 const PLACEHOLDER_REWARD_IMAGE = REWARD_PLACEHOLDER;
@@ -975,6 +1000,8 @@ export function normalizeRewardRow(item: unknown): Reward | null {
     'body',
   ]);
   const terms = pickStrRow(r, ['Terms', 'terms', 'Condition', 'condition', 'Rules', 'rules']);
+  const stockRaw = r.stock ?? r.Stock;
+  const stock = stockRaw != null && String(stockRaw).trim() !== '' ? Number(stockRaw) : NaN;
   return {
     id: idStr,
     rewardId: effectiveRewardId > 0 ? effectiveRewardId : undefined,
@@ -985,6 +1012,7 @@ export function normalizeRewardRow(item: unknown): Reward | null {
     categoryLabel: catRaw || undefined,
     description: description || 'جزئیات این جایزه از طریق اپ قابل مشاهده است.',
     terms: terms || 'شرایط استفاده طبق اعلام سازمان.',
+    stock: Number.isFinite(stock) && stock >= 0 ? Math.trunc(stock) : undefined,
   };
 }
 
@@ -1165,6 +1193,18 @@ export async function redeemReward(
   };
 }
 
+/** Token type labels come from Daftar's params (optimizeTokenType); descriptions back them up. */
+export function tokenKindOf(typeLabel: string, note: string): TokenKind {
+  const s = `${typeLabel} ${note}`;
+  if (s.includes('کارکرد')) return 'karkard';
+  if (s.includes('ماموریت')) return 'mission';
+  if (s.includes('گردونه')) return 'wheel';
+  if (s.includes('دریافت جایزه')) return 'reward';
+  if (s.includes('معرفی') || s.includes('دعوت')) return 'referral';
+  if (s.includes('آموزش') || s.includes('مطالب') || s.includes('مشاهده پیام')) return 'education';
+  return 'other';
+}
+
 function normalizeTokenHistoryRow(item: unknown): Transaction | null {
   if (item == null || typeof item !== 'object') return null;
   const r = item as Record<string, unknown>;
@@ -1189,7 +1229,7 @@ function normalizeTokenHistoryRow(item: unknown): Transaction | null {
     txType = amount >= 0 ? 'earn' : 'spend';
   }
 
-  return { id, date, amount, description, type: txType };
+  return { id, date, amount, description, type: txType, kind: tokenKindOf(typeLabel, desc), note: desc };
 }
 
 export type FetchTokenHistoryResult =
@@ -1457,6 +1497,7 @@ export function normalizeEducationMessage(item: unknown): EducationMessage | nul
     String(r.is_personal).toLowerCase() === 'true';
   const dateJalali =
     pickStrRow(r, ['date_jalali', 'dateJalali', 'DateJalali']) || null;
+  const dateUnix = Math.trunc(pickNumRow(r, ['date_unix', 'dateUnix']));
   return {
     id,
     title,
@@ -1471,6 +1512,7 @@ export function normalizeEducationMessage(item: unknown): EducationMessage | nul
     durationSec,
     isPersonal,
     dateJalali,
+    dateUnix: dateUnix > 0 ? dateUnix : undefined,
   };
 }
 
@@ -1490,6 +1532,10 @@ export type FetchGetMessagesResult =
 
 export async function fetchGetMessages(
   baseUrl: string,
+  /**
+   * With keyNo: only that subscription's personal messages; without it: public ones.
+   * type 0 = education, 1 = message; leave it out for both.
+   */
   params: { keyNo?: string | number; type?: 0 | 1 },
   options?: { signal?: AbortSignal }
 ): Promise<FetchGetMessagesResult> {
@@ -1497,21 +1543,15 @@ export async function fetchGetMessages(
   if (!token) {
     return { ok: false, message: 'توکن یافت نشد' };
   }
-  const msgType = params.type === 1 ? 1 : 0;
 
-  let jsonBody: Record<string, unknown>;
-  if (msgType === 1) {
-    const keyNoStr = toEnglishDigitsOnly(String(params.keyNo ?? '')).trim();
-    if (!keyNoStr) {
-      return { ok: false, message: 'شماره اشتراک نامعتبر است' };
-    }
-    const keyNoNum = Number(keyNoStr);
+  const jsonBody: Record<string, unknown> = {};
+  if (params.type === 0 || params.type === 1) jsonBody.type = params.type;
+  if (params.keyNo != null && String(params.keyNo).trim() !== '') {
+    const keyNoNum = Number(toEnglishDigitsOnly(String(params.keyNo)).trim());
     if (!Number.isFinite(keyNoNum) || !Number.isInteger(keyNoNum) || keyNoNum < 1) {
       return { ok: false, message: 'شماره اشتراک نامعتبر است' };
     }
-    jsonBody = { keyNo: keyNoNum, type: 1 };
-  } else {
-    jsonBody = { type: 0 };
+    jsonBody.keyNo = keyNoNum;
   }
 
   const url = `${normalizeWsBaseUrl(baseUrl)}/api/index.php/ws-optimize/get-messages`;

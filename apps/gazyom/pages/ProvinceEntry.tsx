@@ -173,8 +173,6 @@ const ProvinceEntry: React.FC<ProvinceEntryProps> = ({
     setError('');
   };
 
-  const validateCaptchaUrl = (baseUrl: string) =>
-    `${normalizeBaseUrl(baseUrl)}/api/index.php/ws-optimize/validate-captcha`;
   const sendOtpUrl = (baseUrl: string) =>
     `${normalizeBaseUrl(baseUrl)}/api/index.php/ws-optimize/send-otp`;
   const checkOtpUrl = (baseUrl: string) =>
@@ -199,38 +197,7 @@ const ProvinceEntry: React.FC<ProvinceEntryProps> = ({
     setSendingOtp(true);
     setError('');
     try {
-      const validateRes = await fetch(validateCaptchaUrl(selectedBaseUrl), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({ code: trimmedCaptcha }),
-      });
-
-      let valData: {
-        success?: boolean;
-        type?: string;
-        message?: string;
-        msg?: string;
-      } | null = null;
-      try {
-        valData = (await validateRes.json()) as typeof valData;
-      } catch {
-        valData = null;
-      }
-
-      const valErr = valData?.message ?? valData?.msg ?? '';
-      if (!validateRes.ok || valData?.success !== true) {
-        const t = valData?.type;
-        setError(
-          valErr ||
-            (t === 'empty code'
-              ? 'کد کپچا را وارد کنید'
-              : 'کد کپچا نامعتبر است. دوباره تلاش کنید.')
-        );
-        setCaptchaCode('');
-        await fetchCaptcha(selectedBaseUrl);
-        return;
-      }
-
+      // The captcha goes with send-otp and is checked there (one use); no separate validate call.
       const response = await fetch(sendOtpUrl(selectedBaseUrl), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
@@ -240,6 +207,7 @@ const ProvinceEntry: React.FC<ProvinceEntryProps> = ({
       let data: {
         Status?: boolean;
         success?: boolean;
+        type?: string;
         res?: string;
         msg?: string;
         message?: string;
@@ -252,7 +220,7 @@ const ProvinceEntry: React.FC<ProvinceEntryProps> = ({
 
       const errMsg = data?.msg ?? data?.message ?? '';
 
-      if (data?.res === 'CaptchaError') {
+      if (data?.res === 'CaptchaError' || data?.type === 'captchaError') {
         setError(errMsg || 'کد کپچا صحیح نیست');
         setCaptchaCode('');
         await fetchCaptcha(selectedBaseUrl);

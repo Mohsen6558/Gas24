@@ -6,7 +6,7 @@ import {
   fetchHints,
   JALALI_CHART_MONTH_LABELS,
 } from '../services/wsOptimizeApi';
-import { chartConsumptionDayRead, chartConsumptionDayWrite } from '../services/dataRefreshCache';
+import { chartConsumptionDayRead, chartConsumptionDayWrite, chartYearsDayWrite } from '../services/dataRefreshCache';
 import { getCurrentJalaliMonth1To12, getCurrentJalaliYearMonthKey } from '../services/jalaliMonth';
 import {
   targetAdviceRoadRead,
@@ -82,6 +82,7 @@ const TargetAdvice: React.FC<{
           return;
         }
         chartConsumptionDayWrite(wsBaseUrl, keyNoStr, res.items);
+        chartYearsDayWrite(wsBaseUrl, keyNoStr, res.years);
         setChartRows(res.items);
       })
       .catch(() => {

@@ -6,6 +6,7 @@ import type { EducationMessage } from '../types';
 import { fetchGetMessages, claimMessageToken, sortEducationMessagesVideoFirst } from '../services/wsOptimizeApi';
 import { educationMessagesHourRead, educationMessagesHourWrite } from '../services/dataRefreshCache';
 import { SectionLoader } from '../components/SectionLoader';
+import { peekActivity } from '../services/activity';
 import { EDUCATION_PLACEHOLDER, fallbackTo } from '../services/media';
 import {
   isEducationBookmarked,
@@ -79,7 +80,10 @@ const EducationDetail: React.FC<EducationDetailProps> = ({
   useEffect(() => {
     setClaimError('');
     setClaimedAmount(0);
-    const stored = localStorage.getItem(claimStorageKey(keyNo, item.id)) === '1';
+    // claimed on this device, or (from another device) found in the token history by title
+    const stored =
+      localStorage.getItem(claimStorageKey(keyNo, item.id)) === '1' ||
+      Boolean(peekActivity(wsBaseUrl, keyNo)?.claimedTitles.has(item.title.trim()));
 
     if (!hasReward) {
       setClaimed(false);
@@ -102,7 +106,7 @@ const EducationDetail: React.FC<EducationDetailProps> = ({
       setTimeLeft((p) => (p <= 1 ? 0 : p - 1));
     }, 1000);
     return () => clearInterval(t);
-  }, [item.id, keyNo, hasReward, item.durationSec]);
+  }, [item.id, item.title, keyNo, wsBaseUrl, hasReward, item.durationSec]);
 
   useEffect(() => {
     if (!wsBaseUrl) {
@@ -295,7 +299,7 @@ const EducationDetail: React.FC<EducationDetailProps> = ({
                     ) : timeLeft > 0 ? (
                       <>
                         <Lock size={24} />
-                        مشاهده آموزش… ({formatTime(timeLeft)})
+                        {item.type === 1 ? 'مطالعه پیام…' : 'مشاهده آموزش…'} ({formatTime(timeLeft)})
                       </>
                     ) : (
                       <>

@@ -129,10 +129,14 @@ const RewardDetail: React.FC<RewardDetailProps> = ({
               <button 
                 type="button"
                 onClick={handleClaim}
-                disabled={redeeming || rewardId == null}
+                disabled={redeeming || rewardId == null || reward.stock === 0}
                 className="w-full bg-green-500 disabled:opacity-50 disabled:pointer-events-none text-white py-6 rounded-2xl font-black text-xl shadow-2xl shadow-green-100 active:scale-95 transition-all flex items-center justify-center gap-4 hover:bg-green-600"
               >
-                {redeeming ? 'در حال ثبت…' : `دریافت و کسر ${toPersianDigits(tokenCost.toLocaleString('en-US'))} امتیاز`}
+                {reward.stock === 0
+                  ? 'این جایزه تمام شده است'
+                  : redeeming
+                    ? 'در حال ثبت…'
+                    : `دریافت و کسر ${toPersianDigits(tokenCost.toLocaleString('en-US'))} امتیاز`}
                 <Gift size={24} />
               </button>
             </div>

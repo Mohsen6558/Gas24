@@ -1,6 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
-import { BookOpen, Zap, Thermometer, ShieldCheck, PlayCircle, Bookmark } from 'lucide-react';
+import { BookOpen, Zap, Thermometer, ShieldCheck, PlayCircle, Bookmark, CheckCircle2, Gift } from 'lucide-react';
+import { loadActivity, subscribeActivity } from '../services/activity';
 import type { EducationMessage } from '../types';
 import { fetchGetMessages, sortEducationMessagesVideoFirst } from '../services/wsOptimizeApi';
 import { educationMessagesHourRead, educationMessagesHourWrite } from '../services/dataRefreshCache';
@@ -33,14 +34,43 @@ function levelFromTitle(title: string): 'easy' | 'medium' | 'high' {
 
 interface EducationProps {
   wsBaseUrl: string;
+  keyNo: string;
   onItemClick: (item: EducationMessage) => void;
 }
 
-const Education: React.FC<EducationProps> = ({ wsBaseUrl, onItemClick }) => {
+/** Claimed on this device (EducationDetail's key) or found in the token history by title. */
+function isClaimed(item: EducationMessage, keyNo: string, claimedTitles: Set<string>): boolean {
+  try {
+    if (localStorage.getItem(`gazyom_msg_claimed_${keyNo}_${item.id}`) === '1') return true;
+  } catch {
+    // ignore
+  }
+  return claimedTitles.has(item.title.trim());
+}
+
+const Education: React.FC<EducationProps> = ({ wsBaseUrl, keyNo, onItemClick }) => {
   const [items, setItems] = useState<EducationMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [bookmarkedIds, setBookmarkedIds] = useState(() => getEducationBookmarkIds());
+  const [claimedTitles, setClaimedTitles] = useState<Set<string> | null>(null);
+
+  useEffect(() => {
+    if (!wsBaseUrl || !keyNo) return;
+    let alive = true;
+    const load = () => loadActivity(wsBaseUrl, keyNo).then((a) => alive && setClaimedTitles(a ? a.claimedTitles : null));
+    load();
+    const off = subscribeActivity(load);
+    return () => {
+      alive = false;
+      off();
+    };
+  }, [wsBaseUrl, keyNo]);
+
+  // gazyom still waiting in lessons not claimed yet (only once the history is known)
+  const pendingReward = claimedTitles
+    ? items.reduce((sum, item) => (item.tokenReward > 0 && !isClaimed(item, keyNo, claimedTitles) ? sum + item.tokenReward : sum), 0)
+    : 0;
 
   useEffect(() => {
     return subscribeEducationBookmarks(() => setBookmarkedIds(getEducationBookmarkIds()));
@@ -92,6 +122,16 @@ const Education: React.FC<EducationProps> = ({ wsBaseUrl, onItemClick }) => {
       <p className="text-xs text-slate-400 font-bold leading-relaxed pr-1">
         با یادگیری روش‌های نوین، هم در مصرف گاز صرفه‌جویی کنید و هم سطح گازیوم خود را ارتقا دهید.
       </p>
+
+      {pendingReward > 0 && !loading && (
+        <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-l from-orange-500 to-amber-500 p-4 text-white shadow-lg shadow-orange-100">
+          <div className="w-10 h-10 shrink-0 rounded-xl bg-white/20 flex items-center justify-center"><Gift size={20} /></div>
+          <p className="text-xs md:text-sm font-black leading-relaxed">
+            {toPersianDigits(pendingReward.toLocaleString('en-US'))} گازیوم از آموزش‌ها هنوز منتظر شماست
+            <span className="block text-[10px] md:text-xs font-bold opacity-90">آموزش‌های دارای پاداش را تا آخر ببینید و امتیازشان را بگیرید.</span>
+          </p>
+        </div>
+      )}
 
       {loading ? (
         <SectionLoader
@@ -183,13 +223,20 @@ const Education: React.FC<EducationProps> = ({ wsBaseUrl, onItemClick }) => {
                   </p>
 
                   <div className="flex justify-between items-center pt-4 border-t border-slate-50 gap-2">
-                    <span className="text-[9px] font-black text-slate-400">
-                      {item.tokenReward > 0
-                        ? `${toPersianDigits(item.tokenReward)} گازیوم پاداش`
-                        : isVideo
-                          ? 'ویدیو آموزشی'
-                          : 'مقاله'}
-                    </span>
+                    {item.tokenReward > 0 && claimedTitles && isClaimed(item, keyNo, claimedTitles) ? (
+                      <span className="flex items-center gap-1 text-[9px] font-black text-green-600">
+                        <CheckCircle2 size={12} />
+                        امتیازش را گرفته‌اید
+                      </span>
+                    ) : (
+                      <span className={`text-[9px] font-black ${item.tokenReward > 0 ? 'text-orange-500' : 'text-slate-400'}`}>
+                        {item.tokenReward > 0
+                          ? `${toPersianDigits(item.tokenReward)} گازیوم پاداش`
+                          : isVideo
+                            ? 'ویدیو آموزشی'
+                            : 'مقاله'}
+                      </span>
+                    )}
                     <span className="text-[10px] font-black text-orange-500 bg-orange-50 px-4 py-2 rounded-[7px]">
                       {isVideo ? 'مشاهده ویدیو' : 'ادامه مطالعه'}
                     </span>

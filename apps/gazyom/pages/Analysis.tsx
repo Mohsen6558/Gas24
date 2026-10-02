@@ -2,13 +2,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { toPersianDigits } from '../services/geminiService';
-import { fetchConsumptionChart, fetchHints, type HintRow } from '../services/wsOptimizeApi';
+import { fetchConsumptionChart, fetchHints, type ConsumptionYear, type HintRow } from '../services/wsOptimizeApi';
+import MultiYearConsumption from '../components/MultiYearConsumption';
 import { aggregateConsumptionBySeason, orderChartRowsByJalali } from '../services/chartConsumptionSeasons';
 import {
   analysisHintsType3DayRead,
   analysisHintsType3DayWrite,
   chartConsumptionDayRead,
   chartConsumptionDayWrite,
+  chartYearsDayRead,
+  chartYearsDayWrite,
 } from '../services/dataRefreshCache';
 import { getCurrentJalaliMonth1To12 } from '../services/jalaliMonth';
 import type { ConsumptionData } from '../types';
@@ -44,6 +47,7 @@ const Analysis: React.FC<AnalysisProps> = ({
   const [chartRows, setChartRows] = useState<ConsumptionData[]>([]);
   const [chartLoading, setChartLoading] = useState(false);
   const [chartError, setChartError] = useState('');
+  const [chartYears, setChartYears] = useState<ConsumptionYear[]>([]);
 
   const [hintRows, setHintRows] = useState<HintRow[]>([]);
   const [hintsLoading, setHintsLoading] = useState(false);
@@ -53,8 +57,10 @@ const Analysis: React.FC<AnalysisProps> = ({
     if (!wsBaseUrl || !keyNo) return;
     const keyNoStr = String(keyNo);
     const cached = chartConsumptionDayRead<ConsumptionData[]>(wsBaseUrl, keyNoStr);
-    if (cached) {
+    const cachedYears = chartYearsDayRead<ConsumptionYear[]>(wsBaseUrl, keyNoStr);
+    if (cached && cachedYears) {
       setChartRows(cached);
+      setChartYears(cachedYears);
       setChartError('');
       setChartLoading(false);
       return;
@@ -67,10 +73,13 @@ const Analysis: React.FC<AnalysisProps> = ({
         if (res.ok === false) {
           setChartError(res.message);
           setChartRows([]);
+          setChartYears([]);
           return;
         }
         chartConsumptionDayWrite(wsBaseUrl, keyNoStr, res.items);
+        chartYearsDayWrite(wsBaseUrl, keyNoStr, res.years);
         setChartRows(res.items);
+        setChartYears(res.years);
       })
       .catch(() => {
         if (ac.signal.aborted) return;
@@ -361,6 +370,8 @@ const Analysis: React.FC<AnalysisProps> = ({
           </div>
         </div>
       </div>
+
+      {chartYears.length > 0 && <MultiYearConsumption years={chartYears} />}
     </div>
   );
 };

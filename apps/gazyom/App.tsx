@@ -21,6 +21,8 @@ import TargetAdvice from './pages/TargetAdvice';
 import Leaderboard from './pages/Leaderboard';
 import SelfDeclaration from './pages/SelfDeclaration';
 import Winners from './pages/Winners';
+import Inbox from './pages/Inbox';
+import { invalidateActivity } from './services/activity';
 import { EducationMessage, Reward, Subscription, UserLevel } from './types';
 import { ChevronRight, X, CheckCircle2 } from 'lucide-react';
 import { toPersianDigits } from './services/geminiService';
@@ -41,6 +43,7 @@ const VALID_VIEWS = new Set([
   'leaderboard',
   'self-declare',
   'winners',
+  'inbox',
 ]);
 type AppTab = 'home' | 'rewards' | 'analysis' | 'edu' | 'profile';
 type AppView =
@@ -54,7 +57,8 @@ type AppView =
   | 'target-advice'
   | 'leaderboard'
   | 'self-declare'
-  | 'winners';
+  | 'winners'
+  | 'inbox';
 
 function parseRouteFromUrl(): { tab: AppTab; view: AppView } {
   if (typeof window === 'undefined') return { tab: 'home', view: 'none' };
@@ -149,6 +153,7 @@ const App: React.FC = () => {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showSelfDeclaration, setShowSelfDeclaration] = useState(false);
   const [showWinners, setShowWinners] = useState(false);
+  const [showInbox, setShowInbox] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [selectedBaseUrl, setSelectedBaseUrl] = useState(
     () =>
@@ -200,6 +205,7 @@ const App: React.FC = () => {
     setShowLeaderboard(view === 'leaderboard');
     setShowSelfDeclaration(view === 'self-declare');
     setShowWinners(view === 'winners');
+    setShowInbox(view === 'inbox');
     if (view !== 'reward') setSelectedReward(null);
     if (view !== 'edu-detail') setSelectedEduItem(null);
   };
@@ -325,6 +331,7 @@ const App: React.FC = () => {
   };
 
   const handleSelfDeclareSuccess = () => {
+    invalidateActivity();
     closeView();
     setShowSuccessToast(true);
     setTimeout(() => setShowSuccessToast(false), 5000);
@@ -383,6 +390,9 @@ const App: React.FC = () => {
             onAddSub={() => setShowAddSubModal(true)}
             onSeeAllRewards={() => handleTabChange('rewards')}
             onTotalTokenFromProfile={setTotalTokenFromProfile}
+            onSelfDeclareClick={() => openView('self-declare')}
+            onWheelClick={() => openView('wheel')}
+            onInboxClick={() => openView('inbox')}
           />
         );
       case 'rewards':
@@ -409,7 +419,7 @@ const App: React.FC = () => {
         );
       case 'edu':
         return (
-          <Education wsBaseUrl={selectedBaseUrl} onItemClick={openEduDetail} />
+          <Education wsBaseUrl={selectedBaseUrl} keyNo={activeSub.number} onItemClick={openEduDetail} />
         );
       case 'profile':
         return <Profile 
@@ -436,6 +446,9 @@ const App: React.FC = () => {
             onAddSub={() => setShowAddSubModal(true)}
             onSeeAllRewards={() => handleTabChange('rewards')}
             onTotalTokenFromProfile={setTotalTokenFromProfile}
+            onSelfDeclareClick={() => openView('self-declare')}
+            onWheelClick={() => openView('wheel')}
+            onInboxClick={() => openView('inbox')}
           />
         );
     }
@@ -464,6 +477,10 @@ const App: React.FC = () => {
         />
       )}
 
+      {showInbox && (
+        <Inbox onBack={closeView} wsBaseUrl={selectedBaseUrl} keyNo={activeSub.number} onOpen={openEduDetail} />
+      )}
+
       {selectedEduItem && (
         <EducationDetail
           item={selectedEduItem}
@@ -471,9 +488,10 @@ const App: React.FC = () => {
           keyNo={activeSub.number}
           onBack={closeView}
           onItemSelect={openEduDetail}
-          onClaimSuccess={(added) =>
-            setTotalTokenFromProfile((t) => t + added)
-          }
+          onClaimSuccess={(added) => {
+            setTotalTokenFromProfile((t) => t + added);
+            invalidateActivity();
+          }}
         />
       )}
 
@@ -538,7 +556,10 @@ const App: React.FC = () => {
           <LuckyWheel
             wsBaseUrl={selectedBaseUrl}
             keyNo={activeSub.number}
-            onWin={(amount) => setTotalTokenFromProfile((t) => t + amount)}
+            onWin={(amount) => {
+              setTotalTokenFromProfile((t) => t + amount);
+              invalidateActivity();
+            }}
           />
         </div>
       )}

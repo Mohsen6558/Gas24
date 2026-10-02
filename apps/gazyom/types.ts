@@ -23,7 +23,12 @@ export interface Reward {
   terms: string;
   
   rewardId?: number;
+  /** Items left (from the server); undefined when the server did not say. */
+  stock?: number;
 }
+
+/** Where gazyom came from or went, read from the token history row. */
+export type TokenKind = 'karkard' | 'mission' | 'wheel' | 'reward' | 'referral' | 'education' | 'other';
 
 export interface Transaction {
   id: string;
@@ -31,6 +36,9 @@ export interface Transaction {
   amount: number;
   description: string;
   type: 'earn' | 'spend';
+  kind?: TokenKind;
+  /** The server's description alone (without the type label), e.g. «پاداش مشاهده پیام: …». */
+  note?: string;
 }
 
 
@@ -94,4 +102,5 @@ export interface EducationMessage {
   durationSec: number;
   isPersonal: boolean;
   dateJalali: string | null;
+  dateUnix?: number;
 }

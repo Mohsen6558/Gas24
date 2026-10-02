@@ -69,6 +69,16 @@ export function chartConsumptionDayWrite<T>(baseUrl: string, keyNo: string, data
 }
 
 
+/** Every year of the chart (for the multi-year view in Analysis). */
+export function chartYearsDayRead<T>(baseUrl: string, keyNo: string): T | null {
+  return readTimed<T>(`day_chart_years__${seg(baseUrl, keyNo)}`, DAY_MS);
+}
+
+export function chartYearsDayWrite<T>(baseUrl: string, keyNo: string, data: T): void {
+  writeTimed(`day_chart_years__${seg(baseUrl, keyNo)}`, data);
+}
+
+
 export function analysisHintsType3DayRead<T>(baseUrl: string, keyNo: string): T | null {
   return readTimed<T>(`day_analysis_hints_t3__${segUser(baseUrl, keyNo)}`, DAY_MS);
 }
