@@ -7,6 +7,7 @@
 4. service-worker precache revisions match the files (tools/update_sw_revisions.py)
 5. gas24 pages carry the Google Analytics tag; sitemap.xml parses and lists existing pages
 6. the app's popup banner settings (src/my/banner.json) are usable
+7. the app's prize winners list (src/my/winners.json) is usable
 """
 import datetime
 import json
@@ -122,6 +123,36 @@ def main():
                     datetime.datetime.fromisoformat(b[field])
                 except ValueError:
                     errors.append(f'{where}: {field} "{b[field]}" is not a date like 2026-12-20')
+
+    # Prize winners page of the app (src/my/winners.json, edited by hand).
+    winners_path = os.path.join(SRC, 'my', 'winners.json')
+    try:
+        with open(winners_path, encoding='utf-8') as f:
+            winners = json.load(f).get('winners')
+    except FileNotFoundError:
+        winners = []
+    except (ValueError, AttributeError):
+        winners = []  # invalid JSON is already reported above
+    if not isinstance(winners, list):
+        errors.append('my/winners.json: "winners" must be a list')
+        winners = []
+    seen_ids = set()
+    for i, w in enumerate(winners):
+        where = f'my/winners.json winner {i + 1}'
+        if not isinstance(w, dict) or not w.get('id') or not str(w.get('title') or '').strip():
+            errors.append(f'{where}: needs "id" and "title"')
+            continue
+        if w['id'] in seen_ids:
+            errors.append(f'{where}: id "{w["id"]}" is used twice')
+        seen_ids.add(w['id'])
+        image = str(w.get('image') or '')
+        if w.get('enabled', True) and image.startswith('/') and not os.path.exists(os.path.join(SRC, 'my', image.lstrip('/'))):
+            errors.append(f'{where}: image {image} does not exist in src/my')
+        if image and not (re.match(r'^https?://', image) or (image.startswith('/') and not image.startswith('//'))):
+            errors.append(f'{where}: image must start with https:// or / (got {image})')
+        for key in w.get('provinces') or []:
+            if key not in known:
+                errors.append(f'{where}: unknown province "{key}"')
 
     # Google Analytics must stay on every gas24 page (a fresh province build would drop it).
     for rel in GA_PAGES:

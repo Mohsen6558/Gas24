@@ -1,0 +1,13 @@
+{
+  "winners": [
+    {
+      "id": "example-1405-07",
+      "enabled": false,
+      "image": "/winners/example.jpg",
+      "title": "برندهٔ خودروی ۲۰۷ اتوماتیک",
+      "text": "نام برنده از شهر …\nبرندهٔ قرعه‌کشی ماهانهٔ گازیوم",
+      "date": "مهر ۱۴۰۵",
+      "provinces": []
+    }
+  ]
+}

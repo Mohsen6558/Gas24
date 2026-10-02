@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { ChevronLeft, Sparkles, Tag, Disc, History, Gift } from 'lucide-react';
+import { ChevronLeft, Sparkles, Tag, Disc, History, Gift, Trophy } from 'lucide-react';
 import { SectionLoader } from '../components/SectionLoader';
 import { Reward } from '../types';
 import { toPersianDigits } from '../services/geminiService';
@@ -39,6 +39,7 @@ interface RewardsProps {
   onWheelClick: () => void;
   onHistoryClick: () => void;
   onMyRewardsClick: () => void;
+  onWinnersClick: () => void;
 }
 
 const Rewards: React.FC<RewardsProps> = ({
@@ -48,6 +49,7 @@ const Rewards: React.FC<RewardsProps> = ({
   onWheelClick,
   onHistoryClick,
   onMyRewardsClick,
+  onWinnersClick,
 }) => {
   const [filter, setFilter] = useState('all');
   const [rewards, setRewards] = useState<Reward[]>([]);
@@ -143,6 +145,21 @@ const Rewards: React.FC<RewardsProps> = ({
           <ChevronLeft size={20} />
         </div>
       </div>
+
+      <button type="button" onClick={onWinnersClick} className="w-full bg-white rounded-[28px] md:rounded-[32px] p-4 md:p-6 border border-amber-100 shadow-sm flex items-center justify-between gap-4 text-right group hover:shadow-lg transition-all">
+        <div className="flex items-center gap-4 min-w-0">
+          <div className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-br from-amber-400 to-orange-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-amber-100 shrink-0">
+            <Trophy size={26} />
+          </div>
+          <div className="space-y-0.5 md:space-y-1 min-w-0">
+            <h3 className="text-sm md:text-xl font-black text-slate-800">برندگان جوایز</h3>
+            <p className="text-[10px] md:text-sm font-bold text-slate-400 line-clamp-1">ببینید چه کسانی جایزه بردند</p>
+          </div>
+        </div>
+        <div className="p-2 bg-amber-50 text-amber-600 rounded-full group-hover:translate-x-[-4px] transition-transform shrink-0">
+          <ChevronLeft size={18} />
+        </div>
+      </button>
       
       <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide">
         {categoryChips.map((cat) => (
