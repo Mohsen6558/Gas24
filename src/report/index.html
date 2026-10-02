@@ -148,6 +148,22 @@ tfoot td { font-weight: 700; border-top: 1px solid var(--axis); border-bottom: 0
 .kv { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; font-size: 13px; }
 .kv dt { color: var(--ink2); }
 .kv dd { margin: 0; }
+/* details (row by row) */
+.dtools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+.dtools .chips { flex: 1; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; }
+.dtools .chip { white-space: nowrap; }
+.dtools input { padding: 6px 10px; border-radius: 10px; border: 1px solid var(--axis); background: var(--raised); width: 220px; max-width: 100%; direction: ltr; text-align: center; }
+.pager { display: flex; align-items: center; gap: 8px; justify-content: center; margin-top: 10px; color: var(--ink2); font-size: 13px; flex-wrap: wrap; }
+.pager .mini:disabled { opacity: .45; cursor: default; }
+.modal { position: fixed; inset: 0; z-index: 20; background: rgba(0,0,0,.5); display: grid; place-items: center; padding: 16px; }
+.modal .box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 16px; width: 100%; max-width: 720px; max-height: calc(100vh - 32px); overflow: auto; }
+.modal .box header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.modal .box header h2 { font-size: 15px; flex: 1; }
+.modal img { display: block; max-width: 100%; max-height: 70vh; margin: 0 auto; border-radius: 10px; }
+.answers { display: grid; grid-template-columns: minmax(140px, 40%) 1fr; gap: 6px 14px; font-size: 13px; margin: 0; }
+.answers dt { color: var(--ink2); }
+.answers dd { margin: 0; overflow-wrap: anywhere; }
+.answers .sec { grid-column: 1 / -1; font-weight: 700; margin-top: 8px; border-bottom: 1px solid var(--grid); padding-bottom: 2px; }
 </style>
 </head>
 <body>
@@ -814,7 +830,205 @@ tfoot td { font-weight: 700; border-top: 1px solid var(--axis); border-bottom: 0
       dc.scanned < dc.total ? el('div', { class: 'note', text: 'فقط ' + fmt(dc.scanned) + ' فرم اول بررسی شده است.' }) : null,
     ]));
 
+    grid.appendChild(detailsCard(d.province.key, f));
+
     content.appendChild(grid);
+  }
+
+  // ------------------------------------------------------------ details (row by row)
+  // پاسخ‌های فرم ممیزی، به ترتیب و با همان پرسش‌های فرم (src/test)
+  var DECL_SECTIONS = [
+    ['مشخصات و موقعیت', [['fullName', 'نام و نام خانوادگی'], ['phoneNumber', 'شماره تماس'], ['identificationType', 'شناسایی با'], ['gasSubscriptionNumber', 'شماره اشتراک گاز'], ['postalCode', 'کد پستی'], ['province', 'استان'], ['city', 'شهر'], ['habitationType', 'نوع محل سکونت'], ['areaSize', 'متراژ (مترمربع)']]],
+    ['ساختمان', [['buildYear', 'سال ساخت'], ['materials', 'جنس دیوارهای بیرونی'], ['wallThickness', 'ضخامت دیوار بیرونی'], ['unitPosition', 'طبقه واحد'], ['sunLightPosition', 'سمت آفتاب‌گیر'], ['exposureToAir', 'دیوارهای رو به هوای آزاد'], ['ceilingInsulation', 'عایق حرارتی سقف'], ['roofStatus', 'وضعیت بام'], ['floorType', 'پوشش کف'], ['windowsCount', 'تعداد پنجره‌ها'], ['sunlightIntensity', 'میزان نور خورشید']]],
+    ['پنجره و درب', [['windowType', 'نوع پنجره'], ['windowSealHealth', 'وضعیت درزگیر پنجره‌ها'], ['airLeakTest', 'آزمون نشت هوا'], ['coldWindDirection', 'سمت ورود باد سرد'], ['thickCurtains', 'پرده‌های ضخیم'], ['crackedGlass', 'شکستگی یا ترک شیشه'], ['entryDoorType', 'جنس و نوع درب ورودی'], ['doorSealingStrip', 'نوار درزگیر درب ورودی'], ['standardBalconyDoor', 'درب بالکن دوجداره'], ['windPenetrationDoors', 'وزش باد از لای درب‌ها']]],
+    ['لوله‌کشی و رادیاتور', [['packagePipeInsulation', 'عایق لوله‌های پکیج'], ['pipePath', 'مسیر عبور لوله‌ها'], ['hotWaterPathLength', 'فاصله رادیاتورها از منبع گرمایش'], ['radiatorLeak', 'نشتی رادیاتور'], ['roomWithoutRadiator', 'اتاق سرد بدون رادیاتور'], ['radiatorDistribution', 'پراکندگی رادیاتورها'], ['radiatorCountAdequacy', 'کافی بودن تعداد رادیاتورها']]],
+    ['سیستم گرمایش', [['heatingSystemType', 'نوع سیستم گرمایش اصلی'], ['deviceCapacityAdequacy', 'کافی بودن ظرفیت دستگاه'], ['deviceAge', 'عمر دستگاه'], ['annualServiceDone', 'سرویس سالانه'], ['flameQuality', 'رنگ شعله'], ['chimneyStatus', 'وضعیت دودکش'], ['gasInletPressureAdequacy', 'کافی بودن فشار گاز ورودی'], ['packageInstallLocation', 'محل نصب پکیج']]],
+    ['آب گرم', [['hotWaterSource', 'منبع آب گرم'], ['tempSetting', 'تنظیم دمای آب گرم'], ['hotWaterPipeLength', 'طول لوله آب گرم'], ['hotWaterArrivalTime', 'زمان انتظار برای آب گرم'], ['hotWaterPipeInsulation', 'عایق لوله‌های آب گرم'], ['jointLeak', 'نشتی اتصالات و شیرآلات']]],
+    ['بخاری گازی', [['gasHeaterExists', 'بخاری گازی دارد'], ['gasHeaterType', 'نوع بخاری'], ['gasHeaterChimney', 'دودکش بخاری'], ['gasHeaterCapacityAdequacy', 'کافی بودن ظرفیت بخاری'], ['gasHeaterPlacement', 'محل بخاری'], ['odsPerformance', 'عملکرد سنسور اکسیژن (ODS)'], ['gasHeaterFlameHealth', 'سلامت شعله بخاری']]],
+    ['درزها و تهویه', [['airIngressWindows', 'ورود باد از پنجره‌ها'], ['airIngressDoor', 'ورود باد از زیر درب ورودی'], ['unstandardVentilationOpen', 'دریچه کولر در زمستان باز است'], ['underDoorGap', 'درز زیر درب اتاق‌ها'], ['unblockedFalseCeiling', 'سقف کاذب بدون آب‌بندی'], ['externalWallCrack', 'ترک دیوارهای ساختمان'], ['fanWithoutReturnValve', 'هواکش بدون دریچه یک‌طرفه'], ['coldAirFromDucts', 'ورود هوای سرد از کانال‌ها'], ['jointKitchenVentilation', 'تهویه مشترک آشپزخانه'], ['hotAirExitSkyLight', 'خروج هوای گرم از نورگیر']]],
+    ['شرایط محیطی و توضیحات', [['climateRegion', 'اقلیم منطقه'], ['windIntensity', 'وضعیت باد منطقه'], ['prevailingWindDirection', 'جهت باد غالب'], ['additionalComments', 'توضیحات تکمیلی']]],
+  ];
+  var ANSWER_VALUES = { identificationType: { gas: 'شماره اشتراک', postal: 'کد پستی' } };
+  function answerText(v, key) {
+    if (key && ANSWER_VALUES[key] && ANSWER_VALUES[key][v]) return ANSWER_VALUES[key][v];
+    if (v === true) return 'بله';
+    if (v === false) return 'خیر';
+    if (v === null || v === undefined || v === '') return '';
+    if (Array.isArray(v)) return v.map(answerText).filter(function (x) { return x !== ''; }).join('، ');
+    if (typeof v === 'object') return JSON.stringify(v);
+    return String(v);
+  }
+  // ستون‌های CSV فرم: پرسش‌های شناخته‌شده به ترتیب فرم، بعد هر کلید ناشناخته‌ای که در داده بود
+  function declColumns(rows) {
+    var known = {}, cols = [];
+    DECL_SECTIONS.forEach(function (sec) { sec[1].forEach(function (x) { known[x[0]] = true; cols.push(x); }); });
+    rows.forEach(function (r) { Object.keys(r.answers || {}).forEach(function (k) { if (!known[k]) { known[k] = true; cols.push([k, k]); } }); });
+    return cols;
+  }
+
+  function modal(title, body) {
+    var onKey = function (ev) { if (ev.key === 'Escape') close(); };
+    var close = function () { box.remove(); document.removeEventListener('keydown', onKey); };
+    var box = el('div', { class: 'modal', role: 'dialog', 'aria-modal': 'true', 'aria-label': title }, [
+      el('div', { class: 'box' }, [el('header', {}, [el('h2', { text: title }), el('button', { type: 'button', class: 'mini', text: 'بستن', onclick: function () { close(); } })])].concat(body)),
+    ]);
+    box.addEventListener('click', function (ev) { if (ev.target === box) close(); });
+    document.addEventListener('keydown', onKey);
+    document.body.appendChild(box);
+    box.querySelector('button').focus();
+  }
+  function showAnswers(row) {
+    var dl = el('dl', { class: 'answers' });
+    var answers = row.answers || {}, shown = {};
+    DECL_SECTIONS.forEach(function (sec) {
+      var items = sec[1].filter(function (x) { return answerText(answers[x[0]]) !== ''; });
+      if (!items.length) return;
+      dl.appendChild(el('div', { class: 'sec', text: sec[0] }));
+      items.forEach(function (x) { shown[x[0]] = true; dl.appendChild(el('dt', { text: x[1] })); dl.appendChild(el('dd', { text: faDigits(answerText(answers[x[0]], x[0])) })); });
+    });
+    var extra = Object.keys(answers).filter(function (k) { return !shown[k] && answerText(answers[k]) !== ''; });
+    if (extra.length) {
+      dl.appendChild(el('div', { class: 'sec', text: 'سایر' }));
+      extra.forEach(function (k) { dl.appendChild(el('dt', { text: k })); dl.appendChild(el('dd', { text: faDigits(answerText(answers[k])) })); });
+    }
+    modal('فرم ممیزی شماره ' + faDigits(row.id) + (row.name ? ' — ' + row.name : ''), [dl]);
+  }
+  // تصویر با fetch گرفته می‌شود چون report.php هدر X-Gas24-Report می‌خواهد
+  function showKarkardImage(provinceKey, row) {
+    var holder = el('div', { class: 'dim', text: 'در حال دریافت تصویر…' });
+    modal('تصویر کنتور — اشتراک ' + faDigits(row.keyNo) + ' — ' + dateLabel(row.date), [holder]);
+    var q = new URLSearchParams({ op: 'detail-image', province: provinceKey, id: String(row.id) });
+    fetch(API + '?' + q.toString(), { credentials: 'same-origin', cache: 'no-store', headers: { 'X-Gas24-Report': '1' } }).then(function (res) {
+      if (!res.ok || !/^image\//.test(res.headers.get('Content-Type') || '')) {
+        return res.json().catch(function () { return null; }).then(function (d) { throw new Error((d && d.message) || 'تصویر دریافت نشد.'); });
+      }
+      return res.blob();
+    }).then(function (blob) {
+      holder.replaceWith(el('img', { alt: 'تصویر کنتور اشتراک ' + row.keyNo, src: URL.createObjectURL(blob) }));
+    }, function (err) { holder.textContent = err.message; });
+  }
+
+  function ownerBadge(r) {
+    if (r.ownerMobile === true) return statusBadge('good', 'مالک');
+    if (r.ownerMobile === false) return statusBadge('warning', 'غیر از مالک');
+    return el('span', { class: 'dim', text: '—' });
+  }
+  var DETAIL_KINDS = [
+    { kind: 'subscriptions', label: 'اشتراک‌های ثبت‌شده', sub: 'اشتراک‌هایی که داخل بازه در باشگاه ثبت شده‌اند. «مالک» یعنی موبایل عضو همان موبایل ثبت‌شده‌ی مالک در اطلاعات مشترکین است.',
+      cols: function () { return [
+        { t: 'شماره اشتراک', f: function (r) { return ltr(r.keyNo); }, csv: function (r) { return r.keyNo; } },
+        { t: 'موبایل', f: function (r) { return ltr(r.mobile); }, csv: function (r) { return r.mobile; } },
+        { t: 'نام مالک', f: function (r) { return r.name || '—'; } },
+        { t: 'مالک؟', f: ownerBadge, csv: function (r) { return r.ownerMobile === true ? 'مالک' : r.ownerMobile === false ? 'غیر از مالک' : ''; } },
+        { t: 'شهر', f: function (r) { return r.city || '—'; } },
+        { t: 'نام دلخواه', f: function (r) { return r.alias || '—'; } },
+        { t: 'تاریخ ثبت', f: function (r) { return dateLabel(r.registered); }, csv: function (r) { return r.registered; } },
+        { t: 'موجودی امتیاز', n: true, f: function (r) { return fmt(r.token); }, csv: function (r) { return r.token; } },
+        { t: 'کد معرف', f: function (r) { return ltr(r.refCode); }, csv: function (r) { return r.refCode; } },
+      ]; } },
+    { kind: 'karkard', label: 'اعلام کارکرد', sub: 'کارکردهای ثبت‌شده داخل بازه؛ برای دیدن عکس کنتور روی «تصویر» بزنید.',
+      cols: function (provinceKey) { return [
+        { t: 'تاریخ و ساعت', f: function (r) { return dateLabel(r.date); }, csv: function (r) { return r.date; } },
+        { t: 'شماره اشتراک', f: function (r) { return ltr(r.keyNo); }, csv: function (r) { return r.keyNo; } },
+        { t: 'موبایل', f: function (r) { return ltr(r.mobile); }, csv: function (r) { return r.mobile; } },
+        { t: 'شهر', f: function (r) { return r.city || '—'; } },
+        { t: 'رقم کنتور', n: true, f: function (r) { return r.counter === null ? '—' : faDigits(r.counter); }, csv: function (r) { return r.counter; } },
+        { t: 'رقم هوش مصنوعی', n: true, f: function (r) { return r.aiNumber === null ? '—' : faDigits(r.aiNumber); }, csv: function (r) { return r.aiNumber; } },
+        { t: 'روش', f: function (r) { return r.method; } },
+        { t: 'تصویر', f: function (r) {
+          return r.hasImage
+            ? el('button', { type: 'button', class: 'mini', text: 'تصویر', onclick: function (ev) { ev.stopPropagation(); showKarkardImage(provinceKey, r); } })
+            : el('span', { class: 'dim', text: 'ندارد' });
+        }, csv: function (r) { return r.hasImage ? 'دارد' : 'ندارد'; } },
+      ]; } },
+    { kind: 'rewards', label: 'جوایز داده‌شده', sub: 'جوایزی که داخل بازه به مشترکان رسیده، با کد هر جایزه.',
+      cols: function () { return [
+        { t: 'تاریخ و ساعت', f: function (r) { return dateLabel(r.date); }, csv: function (r) { return r.date; } },
+        { t: 'شماره اشتراک', f: function (r) { return ltr(r.keyNo); }, csv: function (r) { return r.keyNo; } },
+        { t: 'موبایل', f: function (r) { return ltr(r.mobile); }, csv: function (r) { return r.mobile; } },
+        { t: 'شهر', f: function (r) { return r.city || '—'; } },
+        { t: 'جایزه', f: function (r) { return r.reward; } },
+        { t: 'دسته', f: function (r) { return r.category || '—'; } },
+        { t: 'امتیاز', n: true, f: function (r) { return fmt(r.token); }, csv: function (r) { return r.token; } },
+        { t: 'کد', f: function (r) { return ltr(r.code); }, csv: function (r) { return r.code; } },
+      ]; } },
+    { kind: 'declarations', label: 'فرم‌های ممیزی', sub: 'همه فرم‌ها، جدیدترین اول؛ فرم تاریخ ثبت ندارد و بازه و شهر روی آن اثری ندارد. برای دیدن همه پاسخ‌ها روی ردیف بزنید.',
+      cols: function () { return [
+        { t: 'شماره فرم', n: true, f: function (r) { return faDigits(r.id); }, csv: function (r) { return r.id; } },
+        { t: 'شماره اشتراک', f: function (r) { return ltr(r.keyNo); }, csv: function (r) { return r.keyNo; } },
+        { t: 'نام', f: function (r) { return r.name || '—'; } },
+        { t: 'موبایل', f: function (r) { return ltr(r.mobile); }, csv: function (r) { return r.mobile; } },
+        { t: 'شهر', f: function (r) { return r.city || '—'; } },
+        { t: 'نوع سکونت', f: function (r) { return r.habitationType || '—'; } },
+        { t: 'متراژ', n: true, f: function (r) { return r.areaSize ? faDigits(r.areaSize) : '—'; }, csv: function (r) { return r.areaSize; } },
+        { t: 'سیستم گرمایش', f: function (r) { return r.heatingSystemType || '—'; } },
+      ]; } },
+  ];
+
+  // کارت «جزئیات»: چهار زبانه، جستجوی شماره اشتراک/موبایل، صفحه‌بندی ۵۰تایی و CSV همه ردیف‌ها
+  function detailsCard(provinceKey, f) {
+    var st = state.detail = { kind: (state.detail && state.detail.kind) || 'subscriptions', page: 1, q: '' };
+    var chips = el('div', { class: 'chips', role: 'tablist' });
+    var search = el('input', { type: 'search', placeholder: 'جستجوی اشتراک یا موبایل', inputmode: 'numeric', 'aria-label': 'جستجوی شماره اشتراک یا موبایل' });
+    var exportBtn = el('button', { type: 'button', class: 'mini', text: 'دریافت CSV همه' });
+    var sub = el('div', { class: 'note', style: 'margin:0 0 8px' });
+    var body = el('div');
+    var pager = el('div', { class: 'pager' });
+    var seq = 0;
+    var params = function (extra) {
+      var p = { province: provinceKey, kind: st.kind, from: f.from, to: f.to };
+      if (f.city) p.cityId = f.city;
+      if (st.q) p.q = st.q;
+      return Object.assign(p, extra || {});
+    };
+    var spec = function () { return DETAIL_KINDS.filter(function (k) { return k.kind === st.kind; })[0]; };
+    var fetchPage = function () {
+      var k = spec(), mine = ++seq;
+      sub.textContent = k.sub;
+      Array.prototype.forEach.call(chips.children, function (c) { c.setAttribute('aria-selected', String(c.dataset.kind === st.kind)); c.setAttribute('aria-pressed', String(c.dataset.kind === st.kind)); });
+      body.textContent = ''; pager.textContent = '';
+      body.appendChild(el('div', { class: 'dim', text: 'در حال دریافت…' }));
+      api('detail', params({ page: st.page })).then(function (d) {
+        if (mine !== seq) return;
+        body.textContent = '';
+        if (!d.rows.length) body.appendChild(el('div', { class: 'dim', text: st.q ? 'نتیجه‌ای برای این جستجو نیست.' : 'موردی ثبت نشده است.' }));
+        else body.appendChild(table(k.cols(provinceKey), d.rows, st.kind === 'declarations' ? { onRow: showAnswers } : {}));
+        var pages = Math.max(1, Math.ceil(d.total / d.pageSize));
+        pager.appendChild(el('button', { type: 'button', class: 'mini', text: 'قبلی', disabled: st.page <= 1, onclick: function () { st.page--; fetchPage(); } }));
+        pager.appendChild(el('span', { text: 'صفحه ' + faDigits(st.page) + ' از ' + faDigits(pages) + ' · ' + fmt(d.total) + ' ردیف' }));
+        pager.appendChild(el('button', { type: 'button', class: 'mini', text: 'بعدی', disabled: st.page >= pages, onclick: function () { st.page++; fetchPage(); } }));
+      }, function (err) {
+        if (mine !== seq) return;
+        body.textContent = '';
+        body.appendChild(el('div', { class: 'alert error', text: err.message }));
+      });
+    };
+    DETAIL_KINDS.forEach(function (k) {
+      chips.appendChild(el('button', { type: 'button', class: 'chip', role: 'tab', text: k.label, 'data-kind': k.kind, onclick: function () { st.kind = k.kind; st.page = 1; fetchPage(); } }));
+    });
+    var timer = null;
+    search.addEventListener('input', function () {
+      clearTimeout(timer);
+      timer = setTimeout(function () { st.q = enDigits(search.value).replace(/\D/g, ''); st.page = 1; fetchPage(); }, 400);
+    });
+    exportBtn.addEventListener('click', function () {
+      var k = spec();
+      exportBtn.disabled = true; exportBtn.textContent = 'در حال آماده‌سازی…';
+      api('detail', params({ export: '1' })).then(function (d) {
+        var cols = k.cols(provinceKey);
+        var head = cols.map(function (c) { return c.t; });
+        var rows = d.rows.map(function (r) { return cols.map(function (c) { return c.csv ? c.csv(r) : c.f(r); }); });
+        if (st.kind === 'declarations') {
+          var extra = declColumns(d.rows);
+          head = head.concat(extra.map(function (x) { return x[1]; }));
+          rows = rows.map(function (row, i) { return row.concat(extra.map(function (x) { return answerText((d.rows[i].answers || {})[x[0]], x[0]); })); });
+        }
+        csv('gazyom-' + provinceKey + '-' + st.kind + '-' + f.from + '_' + f.to, head, rows);
+        if (d.truncated) alert('فقط ' + fmt(d.rows.length) + ' ردیف اول از ' + fmt(d.total) + ' ردیف در فایل آمد؛ بازه را کوتاه‌تر کنید.');
+      }, function (err) { alert(err.message); }).then(function () { exportBtn.disabled = false; exportBtn.textContent = 'دریافت CSV همه'; });
+    });
+    fetchPage();
+    return card('جزئیات', 'ردیف‌به‌ردیف، با شماره اشتراک و موبایل کامل', [el('div', { class: 'dtools' }, [chips, search]), sub, body, pager], { actions: [exportBtn] });
   }
 
   // ------------------------------------------------------------ start

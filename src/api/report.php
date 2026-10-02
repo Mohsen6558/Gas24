@@ -306,6 +306,98 @@ if ($op === 'report') {
     reportRespond($info + ['mode' => 'basic', 'cached' => $basic['cached'], 'data' => $basic['basic']]);
 }
 
+// جزئیات ردیف‌به‌ردیف (ws-optimize/report-detail دفتر): اشتراک‌ها، کارکردها، جوایز داده‌شده و فرم‌های ممیزی.
+// export=1 همه ردیف‌ها را (حداکثر REPORT_DETAIL_EXPORT_MAX) برای خروجی CSV یک‌جا برمی‌گرداند.
+const REPORT_DETAIL_KINDS = ['subscriptions', 'karkard', 'rewards', 'declarations'];
+const REPORT_DETAIL_EXPORT_MAX = 10000;
+
+function reportDetailProvince(array $config): array
+{
+    $provinceKey = (string) ($_GET['province'] ?? '');
+    $province = $config['provinces'][$provinceKey] ?? null;
+    if ($province === null) {
+        respondError(404, 'استان درخواست‌شده در سامانه تعریف نشده است.');
+    }
+    if (empty($province['upstream'])) {
+        respondError(503, "سامانه استان {$province['name']} هنوز به گاز۲۴ متصل نشده است.");
+    }
+    return [$provinceKey, $province];
+}
+
+function reportDetailError(array $result, string $name): string
+{
+    if ($result['status'] === 404) {
+        return "سامانه دفتر استان $name هنوز جزئیات گزارش (ws-optimize/report-detail) را ندارد؛ دفتر این استان را به‌روز کنید.";
+    }
+    return reportError($result, $name);
+}
+
+if ($op === 'detail') {
+    [$provinceKey, $province] = reportDetailProvince($config);
+    $kind = (string) ($_GET['kind'] ?? '');
+    if (!in_array($kind, REPORT_DETAIL_KINDS, true)) {
+        respondError(400, 'نوع جزئیات معتبر نیست.');
+    }
+    $params = reportFilters();
+    unset($params['interval']);
+    $params['kind'] = $kind;
+    $q = preg_replace('/\D+/', '', strtr((string) ($_GET['q'] ?? ''), ['۰' => '0', '۱' => '1', '۲' => '2', '۳' => '3', '۴' => '4', '۵' => '5', '۶' => '6', '۷' => '7', '۸' => '8', '۹' => '9']));
+    if ($q !== '') {
+        $params['q'] = substr($q, 0, 15);
+    }
+    $export = ($_GET['export'] ?? '') === '1';
+    $page = max(1, (int) ($_GET['page'] ?? 1));
+    $pageSize = $export ? 1000 : 50;
+    $rows = [];
+    $total = 0;
+    $cached = true;
+    do {
+        $result = reportFetch(['d' => [$provinceKey, 'report-detail', $params + ['page' => $page, 'pageSize' => $pageSize]]],
+            $config, $secrets, $defaultToken, $refresh)['d'];
+        if (($result['data']['success'] ?? false) !== true) {
+            respondError(502, reportDetailError($result, $province['name']));
+        }
+        $cached = $cached && $result['cached'];
+        $total = (int) ($result['data']['total'] ?? 0);
+        $rows = array_merge($rows, (array) ($result['data']['rows'] ?? []));
+        $page++;
+    } while ($export && count($rows) < min($total, REPORT_DETAIL_EXPORT_MAX) && !empty($result['data']['rows']));
+    reportRespond([
+        'province' => ['key' => $provinceKey, 'name' => $province['name']],
+        'kind' => $kind,
+        'total' => $total,
+        'page' => $export ? 1 : (int) ($result['data']['page'] ?? 1),
+        'pageSize' => $export ? count($rows) : $pageSize,
+        'truncated' => $export && $total > count($rows),
+        'cached' => $cached,
+        'rows' => $rows,
+    ]);
+}
+
+if ($op === 'detail-image') {
+    [$provinceKey, $province] = reportDetailProvince($config);
+    $id = (string) ($_GET['id'] ?? '');
+    if (!ctype_digit($id)) {
+        respondError(400, 'شناسه کارکرد معتبر نیست.');
+    }
+    $result = reportFetch(['i' => [$provinceKey, 'report-detail', ['kind' => 'karkard-image', 'id' => $id]]],
+        $config, $secrets, $defaultToken, $refresh)['i'];
+    $data = $result['data'] ?? [];
+    if (($data['success'] ?? false) !== true) {
+        respondError(($data['type'] ?? '') === 'notFound' ? 404 : 502, $data['message'] ?? reportDetailError($result, $province['name']));
+    }
+    $mime = in_array($data['mime'] ?? '', ['image/jpeg', 'image/png', 'image/webp'], true) ? $data['mime'] : 'image/jpeg';
+    $binary = base64_decode((string) ($data['image'] ?? ''), true);
+    if ($binary === false || $binary === '') {
+        respondError(502, 'تصویر این کارکرد خوانده نشد.');
+    }
+    header('Content-Type: ' . $mime);
+    header('Cache-Control: private, max-age=600');
+    header('X-Content-Type-Options: nosniff');
+    echo $binary;
+    exit();
+}
+
 if ($op === 'compare') {
     $params = reportFilters();
     unset($params['cityId'], $params['interval']);
